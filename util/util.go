@@ -98,7 +98,11 @@ func (f *Func) ToSQL() string {
 		return infixFn("OR")
 	case FuncLogicAnd:
 		return infixFn("AND")
-	case FuncLogicXor:
+	case FuncAnd:
+		return infixFn("&")
+	case FuncOr:
+		return infixFn("|")
+	case FuncLogicXor, FuncXor:
 		return infixFn("^")
 	case FuncPlus:
 		return infixFn("+")
