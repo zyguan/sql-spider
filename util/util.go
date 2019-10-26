@@ -365,7 +365,8 @@ func (o *OrderBy) ToBeautySQL(level int) string {
 	for _, e := range o.OrderByExprs {
 		orderBy = append(orderBy, e.ToSQL())
 	}
-	return o.children[0].ToBeautySQL(level) + " ORDER BY " + strings.Join(orderBy, ", ")
+
+	return "SELECT * FROM (" + o.children[0].ToBeautySQL(level+1) + ") ORDER BY " + strings.Join(orderBy, ", ")
 }
 
 func (o *OrderBy) Clone() Node {
