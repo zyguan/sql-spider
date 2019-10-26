@@ -43,7 +43,7 @@ func safePrint(t util.Tree) {
 			panic("??")
 		}
 	}()
-	fmt.Println(t.ToSQL())
+	//fmt.Println(t.ToSQL())
 	fmt.Println(t.ToBeautySQL(0))
 }
 
