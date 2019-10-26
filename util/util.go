@@ -246,6 +246,34 @@ func (p *Projector) ToString() string {
 	return "Projector(" + p.children[0].ToString() + ")"
 }
 
+type OrderBy struct {
+	baseNode
+	OrderByExprs []Expr
+}
+
+func (o *OrderBy) Columns() []Expr {
+	return o.children[0].Columns()
+}
+
+func (o *OrderBy) ToSQL() string {
+	orderBy := make([]string, 0, len(o.OrderByExprs))
+	for _, e := range o.OrderByExprs {
+		orderBy = append(orderBy, e.ToSQL())
+	}
+	return "Select * from (" + o.children[0].ToString() + ") order by " + strings.Join(orderBy, ", ")
+}
+
+func (o *OrderBy) Clone() Node {
+	return &OrderBy{
+		*o.baseNode.clone(),
+		nil,
+	}
+}
+
+func (o *OrderBy) ToString() string {
+	return "Order(" + o.children[0].ToString() + ")"
+}
+
 type Agg struct {
 	baseNode
 	AggExprs     []Expr
