@@ -4,10 +4,55 @@ SELECT * FROM ( SELECT c0, MIN(c1) AS c1, MAX(c2) AS c2 FROM (
   SELECT c0, COUNT(c1) AS c1, SUM(c2) AS c2 FROM (
 SELECT * FROM (   SELECT col_double AS c0, col_string AS c1, col_datetime AS c2 FROM t) t WHERE c0
   ) AS t GROUP BY c0
- ) AS t GROUP BY c0) t ORDER BY c0, c1, c2
+ ) AS t GROUP BY c0) t ORDER BY c0, c1, c2;
  
 
 TiDB 返回 47 行， MySQL 返回 93 行；
 
 定位发现是 Coprocesser 处理下推条件 'WHERE c0' 有问题，过滤错了数据；
+
+
+case 2 <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+SELECT * FROM ( SELECT ACOS(c0) AS c0, (TO_BASE64(IF((c1 * (c3 - (c1 ^ 2013464221461210368))), UPPER('XtS38pz2hu'), ABS(0.143))) OR 'z81Z4W') AS c1, 
+c2 AS c2, 
+LOWER(LTRIM(c0)) AS c3, 
+TO_BASE64(REPLACE(LCASE((0.000 + FLOOR(LOG(0.000)))), 
+c0, 
+POWER((ROUND(c1) ^ LOG(LN(-0.000))),
+ 4377038545950721024))) AS c4, (IFNULL(c0, c1) / -451.353) AS c5, (OCT(RTRIM(c0)) >= LCASE(IFNULL(0.410, c1))) AS c6 FROM (
+  SELECT t1.c0 AS c0,t2.c0 AS c1,t2.c1 AS c2,t2.c2 AS c3,t2.c3 AS c4 FROM (
+   SELECT col_string AS c0 FROM t) AS t1, (
+   SELECT col_int AS c0, col_double AS c1, col_string AS c2, col_datetime AS c3 FROM t) AS t2
+   WHERE (t1.c0 < t2.c2)
+ ) AS t) t ORDER BY c0, c1, c2, c3, c4, c5, c6 LIMIT 98;
+ 
+MySQL 返回 98 行， TiDB 报错 constant -4.3238814911258294e+27 overflows bigint；
+
+定位发现是浮点数和整数计算边界有问题；
+
+
+case 3 <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+SELECT * FROM ( SELECT t1.c0 AS c0,t2.c0 AS c1 FROM (
+  SELECT col_string AS c0 FROM t) AS t1, (
+SELECT * FROM (  SELECT SIN(IFNULL(c0, DAYOFWEEK('1999-12-01 12:50:06'))) AS c0 FROM (
+   SELECT col_decimal AS c0 FROM t
+  ) AS t) t WHERE ((REVERSE((c0 OR WEEKOFYEAR('2017-04-18 19:15:51'))) < ('2007-09-03 02:37:55' + (SIGN(0.000) | LN(c0)))) <= (ABS(c0) AND c0))) AS t2
+  WHERE (t1.c0 != t2.c0)) t ORDER BY c0, c1;
+  
+MySQL 返回空结果无报错，TiDB panic；
+
+定位后发现是处理 LogicalOr 改写逻辑有问题， 导致子表达式没有被赋值，出现空指针
+
+
+case 4 <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+SELECT * FROM ( SELECT CEIL(TAN(IF(c1, c1, c1))) AS c0 FROM (
+  SELECT col_string AS c0, col_datetime AS c1 FROM t
+ ) AS t) t ORDER BY c0
+ 
+MySQL 和 TiDB 都返回 100 行，但是最后一行的值一个是 9 一个是 10；
+
+定位后发现是 TiDB 内的 TAN 实现和 MySQL 精度相差太多；
 
