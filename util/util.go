@@ -62,7 +62,7 @@ func (f *Func) ToSQL() string {
 	}()
 
 	infixFn := func(op string) string {
-		return fmt.Sprintf("(%s) %s (%s)", f.children[0].ToSQL(), op, f.children[1].ToSQL())
+		return fmt.Sprintf("%s %s %s", f.children[0].ToSQL(), op, f.children[1].ToSQL())
 	}
 	switch f.Name {
 	case FuncEQ:
