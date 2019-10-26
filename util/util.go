@@ -20,16 +20,18 @@ func (tm TypeMask) Any() Type {
 			return 1 << i
 		}
 	}
-	fmt.Println(">>", tm)
-	panic("??")
+	panic(fmt.Sprintf("DEBUG %v", tm))
 }
 
 func (tm TypeMask) All() []Type {
 	ret := make([]Type, 0, 15)
-	for i := uint(0); i < 10; i++ {
-		if tm&TypeMask(i) > 0 {
+	for i := uint(0); i < 15; i++ {
+		if tm.Contain(Type(1 << i)) {
 			ret = append(ret, Type(1<<i))
 		}
+	}
+	if len(ret) == 0 {
+		panic(fmt.Sprintf("DEBUG %v", tm))
 	}
 	return ret
 }
@@ -256,7 +258,7 @@ func (f *Filter) ToSQL() string {
 }
 func (f *Filter) ToBeautySQL(level int) string {
 	return strings.Repeat(" ", level) + "SELECT * FROM (\n" +
-		strings.Repeat(" ", level + 1) + f.children[0].ToBeautySQL(level + 1) +
+		strings.Repeat(" ", level+1) + f.children[0].ToBeautySQL(level+1) +
 		") WHERE " + f.Where.ToSQL()
 }
 
@@ -299,7 +301,7 @@ func (p *Projector) ToBeautySQL(level int) string {
 		cols[i] = e.ToSQL() + " AS c" + strconv.Itoa(i)
 	}
 	return strings.Repeat(" ", level) + "SELECT " + strings.Join(cols, ", ") + "FROM (" +
-		strings.Repeat(" ", level + 1) + p.children[0].ToBeautySQL(level + 1) + ")"
+		strings.Repeat(" ", level+1) + p.children[0].ToBeautySQL(level+1) + ")"
 }
 
 func (p *Projector) Clone() Node {
@@ -340,7 +342,7 @@ func (o *OrderBy) ToBeautySQL(level int) string {
 		orderBy = append(orderBy, e.ToSQL())
 	}
 	return strings.Repeat(" ", level) + "SELECT * FROM (\n" +
-		strings.Repeat(" ", level + 1) + o.children[0].ToBeautySQL(level + 1) + "\n" +
+		strings.Repeat(" ", level+1) + o.children[0].ToBeautySQL(level+1) + "\n" +
 		strings.Repeat(" ", level) + ") ORDER BY " + strings.Join(orderBy, ", ")
 }
 
@@ -353,7 +355,7 @@ func (o *OrderBy) Clone() Node {
 
 func (o *OrderBy) ToString() string {
 	defer func() {
-		if r := recover(); r!= nil {
+		if r := recover(); r != nil {
 			fmt.Println("=======")
 			fmt.Printf("child:%d", len(o.children))
 			fmt.Println("=======")
@@ -378,7 +380,7 @@ func (l *Limit) ToSQL() string {
 
 func (l *Limit) ToBeautySQL(level int) string {
 	return strings.Repeat(" ", level) + "SELECT * FROM (\n" +
-		strings.Repeat(" ", level + 1) + l.children[0].ToBeautySQL(level + 1) + ") LIMIT " + strconv.Itoa(l.Limit)
+		strings.Repeat(" ", level+1) + l.children[0].ToBeautySQL(level+1) + ") LIMIT " + strconv.Itoa(l.Limit)
 }
 
 func (l *Limit) Clone() Node {
@@ -430,7 +432,7 @@ func (a *Agg) ToBeautySQL(level int) string {
 		groupBy = append(groupBy, e.ToSQL())
 	}
 	return strings.Repeat(" ", level) + "SELECT " + strings.Join(aggs, ", ") +
-		strings.Repeat(" ", level + 1) + " FROM (" + a.children[0].ToBeautySQL(level + 1) + ") GROUP BY " + strings.Join(groupBy, ", ")
+		strings.Repeat(" ", level+1) + " FROM (" + a.children[0].ToBeautySQL(level+1) + ") GROUP BY " + strings.Join(groupBy, ", ")
 }
 
 func (a *Agg) Clone() Node {
@@ -484,9 +486,9 @@ func (j *Join) ToBeautySQL(level int) string {
 		cols[i+lLen] = "t2.c" + strconv.Itoa(i) + " AS " + "c" + strconv.Itoa(i+lLen)
 	}
 	return strings.Repeat(" ", level) + "SELECT " + strings.Join(cols, ",") + " FROM (" +
-		strings.Repeat(" ", level + 1) + l.ToBeautySQL(level + 1) + ") AS t1,\n" +
-		strings.Repeat(" ", level + 1) + r.ToBeautySQL(level + 1) + ") AS t2 ON\n" +
-		strings.Repeat(" ", level + 1) + j.JoinCond.ToSQL()
+		strings.Repeat(" ", level+1) + l.ToBeautySQL(level+1) + ") AS t1,\n" +
+		strings.Repeat(" ", level+1) + r.ToBeautySQL(level+1) + ") AS t2 ON\n" +
+		strings.Repeat(" ", level+1) + j.JoinCond.ToSQL()
 }
 
 func (j *Join) Clone() Node {
