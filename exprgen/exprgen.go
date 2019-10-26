@@ -74,16 +74,16 @@ func fillAgg(a *util.Agg) {
 	if aggCols == 0 {
 		aggCols = 1
 	}
-	groupbyCols := chCols - aggCols
-	children := a.Children()[0].Children()
-	allExprs := make([]util.Expr, chCols)
-	for i := 0; i < chCols; i++ {
-		allExprs[i] = buildExpr(children[i].Columns(), util.TypeDefault)
+	for i := 0; i < aggCols - 1;i ++ {
+		colName := fmt.Sprint("c%v", i)
+		a.GroupByExprs = append(a.GroupByExprs, util.Column{colName, util.TypeDefault})
 	}
-	if groupbyCols > 0 {
-		a.GroupByExprs = allExprs[0:groupbyCols]
+	for i := aggCols;i < chCols;i ++ {
+		colName := fmt.Sprint("c%v", i)
+		expr := &util.Func{Name: util.GetAggExprFromPropTable()}
+		expr.AppendArg(util.Column{colName, util.TypeDefault})
+		a.AggExprs = append(a.AggExprs, expr)
 	}
-	a.AggExprs = allExprs[groupbyCols:chCols]
 }
 
 func fillJoin(j *util.Join) {
@@ -99,6 +99,13 @@ func buildJoinCond(lCols []util.Expr, rCols []util.Expr) util.Expr {
 	expr := &util.Func{Name: util.FuncEQ}
 	expr.AppendArg(util.NewColumn("t1.c"+strconv.Itoa(lIdx), lCols[lIdx].RetType()))
 	expr.AppendArg(util.NewColumn("t2.c"+strconv.Itoa(rIdx), rCols[rIdx].RetType()))
+	return expr
+}
+
+func buildAggExpr(colName string) util.Expr {
+	expr := &util.Func{Name: util.GetAggExprFromPropTable()}
+	//@TODO
+	expr.AppendArg(util.NewColumn(colName, util.TypeNumber))
 	return expr
 }
 
