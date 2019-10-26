@@ -110,6 +110,7 @@ func (r *Runner) Run(t util.Tree) {
 		expBR, err := dumpToByteRows(expRows)
 		if err != nil {
 			log.Error(err)
+			return
 		}
 		r.outInconsistency.Write([]byte("========================================\n> SQL\n"))
 		r.outInconsistency.Write([]byte(q))
@@ -118,17 +119,18 @@ func (r *Runner) Run(t util.Tree) {
 		r.outInconsistency.Write([]byte("\n> ACTUAL\n"))
 		r.outInconsistency.Write([]byte(actErr.Error()))
 		r.outInconsistency.Write([]byte("\n"))
-		expRows.Close()
 	} else {
 		defer expRows.Close()
 		defer actRows.Close()
 		expBR, err := dumpToByteRows(expRows)
 		if err != nil {
 			log.Error(err)
+			return
 		}
 		actBR, err := dumpToByteRows(actRows)
 		if err != nil {
 			log.Error(err)
+			return
 		}
 		if expBR.convertToString() != actBR.convertToString() {
 			r.outInconsistency.Write([]byte("========================================\n> SQL\n"))

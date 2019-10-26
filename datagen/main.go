@@ -29,7 +29,7 @@ CREATE TABLE t (
 );`
 	fmt.Println(dropTable)
 	fmt.Println(createTable)
-	n := 10000
+	n := 100
 	for i := 0; i < n; i++ {
 		insert := fmt.Sprintf(`INSERT IGNORE INTO t values (%v, %v, %v, %v, %v);`,
 			optional(.9, genInt), optional(.9, genDouble), optional(.9, genDecimal),
