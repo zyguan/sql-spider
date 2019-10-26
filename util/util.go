@@ -104,19 +104,21 @@ func (j *Join) ToSQL() string {
 
 type Table struct {
 	baseNode
-	Columns []string
+	Schema TableSchema
+
+	SelectedColumns []string
 }
 
 func (t *Table) NumCols() int {
-	return len(t.Columns)
+	return len(t.SelectedColumns)
 }
 
 func (t *Table) ToSQL() string {
-	cols := make([]string, len(t.Columns))
-	for i, col := range t.Columns {
+	cols := make([]string, len(t.SelectedColumns))
+	for i, col := range t.SelectedColumns {
 		cols[i] = col + " AS c" + strconv.Itoa(i)
 	}
-	return "SELECT " + strings.Join(cols, ", ") + " FROM (" + t.children[0].ToSQL() + ")"
+	return "SELECT " + strings.Join(cols, ", ") + " FROM (" + t.Schema.Name() + ")"
 }
 
 type TableSchema interface {
