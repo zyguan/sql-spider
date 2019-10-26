@@ -52,9 +52,8 @@ func fillNode(node util.Node, ts util.TableSchemas, isRoot bool) {
 }
 
 func fillOrderBy(o *util.OrderBy, ts util.TableSchemas) {
-	for _, col := range o.Children()[0].Columns() {
-		o.OrderByExprs = append(o.OrderByExprs, col)
-		//o.OrderByExprs = append(o.OrderByExprs, util.NewColumn("c"+strconv.Itoa(i), col.RetType()))
+	for i, col := range o.Children()[0].Columns() {
+		o.OrderByExprs = append(o.OrderByExprs, util.NewColumn("c"+strconv.Itoa(i), col.RetType()))
 	}
 }
 
