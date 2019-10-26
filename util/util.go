@@ -36,6 +36,8 @@ type Node interface {
 	Children() []Node
 }
 
+type Tree Node
+
 type baseNode struct {
 	children []Node
 }
