@@ -2,10 +2,8 @@ package exprgen
 
 import (
 	"fmt"
-	"math/rand"
-	"strconv"
-
 	"github.com/zyguan/sqlgen/util"
+	"math/rand"
 )
 
 func GenExprTrees(tree util.Tree, ts util.TableSchemas, n int) []util.Tree {
@@ -78,26 +76,41 @@ func buildJoinCond(nLCols, nRCols int) util.Expr {
 	return expr
 }
 
-func buildExpr(nCols int) util.Expr {
-	var gen func(lv int) util.Expr
-	gen = func(lv int) util.Expr {
+func buildExpr(nCols int, tp util.Type) util.Expr {
+	var gen func(lv int, tp util.Type) util.Expr
+	gen = func(lv int, tp util.Type) util.Expr {
 		switch f := util.GenExprFromProbTable(lv); f {
 		case util.Col:
-			return util.Column("c" + strconv.Itoa(rand.Intn(nCols)))
+			return nil // TODO
+			//return util.Column("c" + strconv.Itoa(rand.Intn(nCols)))
 		case util.Const:
-			return util.Constant("'xxx'") // TODO
+			return nil // TODO
+			//return util.Constant("'xxx'") // TODO
 		default:
-			argsSpec := util.NumArgs[f]
-			n := argsSpec[0]
-			if argsSpec[1] > argsSpec[0] {
-				n = rand.Intn(argsSpec[1]-argsSpec[0]) + argsSpec[0]
+			argsSpec := util.FuncInfos[f]
+			n := argsSpec.MinArgs
+			if argsSpec.MaxArgs > argsSpec.MinArgs {
+				n = rand.Intn(argsSpec.MaxArgs-argsSpec.MinArgs) + argsSpec.MinArgs
 			}
 			expr := &util.Func{Name: f}
 			for i := 0; i < n; i++ {
-				expr.AppendArg(gen(lv + 1))
+				subExpr := gen(lv+1, argsSpec.ArgType(i))
+				if subExpr == nil {
+					return nil
+				}
+				expr.AppendArg(subExpr)
 			}
 			return expr
 		}
 	}
-	return gen(0)
+
+	count := 10000
+	for count > 0 {
+		expr := gen(0, tp)
+		if expr == nil {
+			return expr
+		}
+		count --
+	}
+	panic("???")
 }

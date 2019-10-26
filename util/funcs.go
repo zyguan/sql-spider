@@ -134,21 +134,21 @@ type FuncInfo struct {
 }
 
 const (
-	typeDefault = ETInt | ETReal | ETDecimal | ETString | ETDatetime | ETTimestamp | ETTimestamp | ETJson
-	typeNumber  = ETInt | ETReal | ETDecimal
+	TypeDefault = ETInt | ETReal | ETDecimal | ETString | ETDatetime | ETTimestamp | ETTimestamp | ETJson
+	TypeNumber  = ETInt | ETReal | ETDecimal
 )
 
 func (fi FuncInfo) ArgType(i int) Type {
 	if len(fi.ArgsTypes) < i {
-		return typeDefault
+		return TypeDefault
 	}
 	return fi.ArgsTypes[i]
 }
 
-var funcInfos = map[string]FuncInfo{
+var FuncInfos = map[string]FuncInfo{
 	FuncEQ:     {2, 2, nil},
 	FuncIsTrue: {1, 1, nil},
-	FuncPow:    {2, 2, []Type{typeNumber, typeNumber}},
+	FuncPow:    {2, 2, []Type{TypeNumber, TypeNumber}},
 	FuncLower:  {1, 1, []Type{ETString}},
 }
 
