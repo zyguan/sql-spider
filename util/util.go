@@ -220,9 +220,9 @@ func (t *Table) ToString() string {
 	return "Table"
 }
 
-type TableSchema interface {
-	Name() string
-	Columns() []Column
+type TableSchema struct {
+	Name    string
+	Columns []Column
 }
 
 type TableSchemas []TableSchema

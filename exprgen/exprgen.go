@@ -36,8 +36,8 @@ func fillNode(node util.Node, ts util.TableSchemas) {
 
 func fillTable(t *util.Table, ts util.TableSchemas) {
 	t.Schema = ts[rand.Intn(len(ts))]
-	t.SelectedColumns = make([]string, 0, len(t.Schema.Columns()))
-	for _, col := range t.Schema.Columns() {
+	t.SelectedColumns = make([]string, 0, len(t.Schema.Columns))
+	for _, col := range t.Schema.Columns {
 		if rand.Float64() < .5 {
 			t.SelectedColumns = append(t.SelectedColumns, col.ToSQL())
 		}

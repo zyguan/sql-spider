@@ -8,8 +8,17 @@ import (
 	"github.com/zyguan/sqlgen/util"
 )
 
+func getTableSchemas() util.TableSchemas {
+	return util.TableSchemas{
+		{Name: "t1",
+			Columns: []util.Column{"a", "b"}},
+		{Name: "t2",
+			Columns: []util.Column{"a"}},
+	}
+}
+
 func main() {
-	var ts util.TableSchemas // TODO
+	ts := getTableSchemas()
 	emptyTrees := nodegen.GenerateNode(3)
 	var trees []util.Tree
 	for _, et := range emptyTrees {
