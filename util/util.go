@@ -44,7 +44,7 @@ func (tm TypeMask) All() []Type {
 }
 
 const (
-	ETInt Type = 1 << iota
+	ETInt       Type = 1 << iota
 	ETReal
 	ETDecimal
 	ETString
@@ -60,6 +60,13 @@ type Expr interface {
 	Clone() Expr
 	RetType() Type
 }
+
+type TransformRule interface {
+	OneStep(Expr) []Expr
+}
+
+var rules []TransformRule
+
 
 type Func struct {
 	Name     string
@@ -220,7 +227,7 @@ type Tree Node
 type NodeType uint
 
 const (
-	NTJoin NodeType = 1 << iota
+	NTJoin      NodeType = 1 << iota
 	NTAgg
 	NTProjector
 	NTFilter
