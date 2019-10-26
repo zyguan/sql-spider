@@ -2,6 +2,7 @@ package exprgen
 
 import (
 	"math/rand"
+	"strconv"
 
 	"github.com/zyguan/sqlgen/util"
 )
@@ -69,5 +70,22 @@ func fillFilter(f *util.Filter) []util.Expr {
 }
 
 func buildExpr(nCols int) util.Expr {
-	// TODO
+	var gen func(lv int) util.Expr
+	gen = func(lv int) util.Expr {
+		switch f := util.GenExprFromProbTable(lv); f {
+		case util.Col:
+			return util.Column("c" + strconv.Itoa(nCols))
+		case util.Const:
+			return util.Constant("'TODO'") // TODO
+		default:
+			argsSpec := util.NumArgs[f]
+			n := rand.Intn(argsSpec[1]-argsSpec[0]) + argsSpec[0]
+			expr := &util.Func{Name: f}
+			for i := 0; i < n; i++ {
+				expr.AppendArg(gen(lv + 1))
+			}
+			return expr
+		}
+	}
+	return gen(0)
 }

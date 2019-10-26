@@ -24,6 +24,10 @@ func (f *Func) ToSQL() string {
 	return "" // TODO
 }
 
+func (f *Func) AppendArg(expr Expr) {
+	f.children = append(f.children, expr)
+}
+
 func (f *Func) Clone() Expr {
 	xs := make([]Expr, 0, len(f.children))
 	for _, c := range f.children {
