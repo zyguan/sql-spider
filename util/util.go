@@ -44,7 +44,7 @@ func (tm TypeMask) All() []Type {
 }
 
 const (
-	ETInt       Type = 1 << iota
+	ETInt Type = 1 << iota
 	ETReal
 	ETDecimal
 	ETString
@@ -67,11 +67,14 @@ type TransformRule interface {
 
 var rules []TransformRule
 
-
 type Func struct {
 	Name     string
 	retType  Type
 	children []Expr
+}
+
+func NewFunc(name string, retType Type) *Func {
+	return &Func{name, retType, nil}
 }
 
 func (f *Func) Children() []Expr {
@@ -227,7 +230,7 @@ type Tree Node
 type NodeType uint
 
 const (
-	NTJoin      NodeType = 1 << iota
+	NTJoin NodeType = 1 << iota
 	NTAgg
 	NTProjector
 	NTFilter
@@ -303,6 +306,10 @@ type Projector struct {
 	Projections []Expr
 }
 
+func NewProjector(p []Expr) *Projector {
+	return &Projector{Projections: p}
+}
+
 func (p *Projector) Columns() []Expr {
 	cols := make([]Expr, len(p.Projections))
 	for i, e := range p.Projections {
@@ -339,6 +346,10 @@ func (p *Projector) ToString() string {
 type OrderBy struct {
 	baseNode
 	OrderByExprs []Expr
+}
+
+func NewOrderBy(OrderByExprs []Expr) *OrderBy {
+	return &OrderBy{OrderByExprs: OrderByExprs}
 }
 
 func (o *OrderBy) Columns() []Expr {
@@ -494,6 +505,10 @@ type Table struct {
 	Schema TableSchema
 
 	SelectedColumns []int
+}
+
+func NewTable(Schema TableSchema, SelectedColumns []int) *Table {
+	return &Table{Schema: Schema, SelectedColumns: SelectedColumns}
 }
 
 func (t *Table) Columns() []Expr {
