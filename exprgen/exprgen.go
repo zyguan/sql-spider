@@ -2,6 +2,6 @@ package exprgen
 
 import "github.com/zyguan/sqlgen/util"
 
-func FillExpr(node util.Node)  {
-	
+func GenExprTrees(tree util.Tree, ts util.TableSchemas) []util.Tree {
+	return nil
 }
