@@ -134,8 +134,9 @@ type FuncInfo struct {
 }
 
 const (
-	TypeDefault = TypeMask(ETInt | ETReal | ETDecimal | ETString | ETDatetime | ETTimestamp | ETTimestamp | ETJson)
+	TypeDefault = TypeMask(ETInt | ETReal | ETDecimal | ETString | ETDatetime | ETTimestamp | ETDuration | ETJson)
 	TypeNumber  = TypeMask(ETInt | ETReal | ETDecimal)
+	TypeTime    = TypeMask(ETDatetime | ETTimestamp | ETDuration)
 )
 
 func (fi FuncInfo) ArgTypeMask(i int) TypeMask {
