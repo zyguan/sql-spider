@@ -68,20 +68,22 @@ func fillProj(p *util.Projector) {
 		p.Projections[i] = buildExpr(cols, util.TypeDefault)
 	}
 }
+
 func fillAgg(a *util.Agg) {
+	cols := a.Children()[0].Columns()
 	chCols := len(a.Children()[0].Columns())
 	aggCols := rand.Intn(chCols)
 	if aggCols == 0 {
 		aggCols = 1
 	}
-	for i := 0; i < aggCols - 1;i ++ {
-		colName := fmt.Sprint("c%v", i)
-		a.GroupByExprs = append(a.GroupByExprs, util.Column{colName, util.TypeDefault})
+	for i := 0; i < aggCols-1; i ++ {
+		colName := fmt.Sprint("c%d", i)
+		a.GroupByExprs = append(a.GroupByExprs, util.NewColumn(colName, cols[i].RetType()))
 	}
-	for i := aggCols;i < chCols;i ++ {
-		colName := fmt.Sprint("c%v", i)
+	for i := aggCols; i < chCols; i ++ {
+		colName := fmt.Sprint("c%d", i)
 		expr := &util.Func{Name: util.GetAggExprFromPropTable()}
-		expr.AppendArg(util.Column{colName, util.TypeDefault})
+		expr.AppendArg(util.NewColumn(colName, cols[i].RetType()))
 		a.AggExprs = append(a.AggExprs, expr)
 	}
 }
@@ -99,13 +101,6 @@ func buildJoinCond(lCols []util.Expr, rCols []util.Expr) util.Expr {
 	expr := &util.Func{Name: util.FuncEQ}
 	expr.AppendArg(util.NewColumn("t1.c"+strconv.Itoa(lIdx), lCols[lIdx].RetType()))
 	expr.AppendArg(util.NewColumn("t2.c"+strconv.Itoa(rIdx), rCols[rIdx].RetType()))
-	return expr
-}
-
-func buildAggExpr(colName string) util.Expr {
-	expr := &util.Func{Name: util.GetAggExprFromPropTable()}
-	//@TODO
-	expr.AppendArg(util.NewColumn(colName, util.TypeNumber))
 	return expr
 }
 
