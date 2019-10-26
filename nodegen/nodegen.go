@@ -1,18 +1,17 @@
 package nodegen
 
 import (
-	"github.com/zyguan/sqlgen/util"
-	"math/rand"
 	"fmt"
+	"math/rand"
+
+	"github.com/zyguan/sqlgen/util"
 )
 
 type NodeGenerator interface {
 	Generate(level int) util.Node
 }
 
-
 type RandomNodeGenerator struct {
-
 }
 
 func randomGenNode() util.Node {
@@ -51,8 +50,6 @@ func (rn *RandomNodeGenerator) Generate(level int) util.Node {
 	}
 	return node
 }
-
-
 
 func GenerateNode(number int) []util.Node {
 	generator := RandomNodeGenerator{}
