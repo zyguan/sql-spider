@@ -39,7 +39,6 @@ func (bh *BFSHelper) transform(root, node Node, path []int) {
 	case *Filter:
 		for _, r := range rules {
 			exprs := r.OneStep(t.Where, nil)
-
 			for _, where := range exprs {
 				tree := root.Clone()
 				p := tree
@@ -47,7 +46,7 @@ func (bh *BFSHelper) transform(root, node Node, path []int) {
 					p = p.Children()[path[i]]
 				}
 				p.(*Filter).Where = where
-				
+
 				state := tree.ToBeautySQL(0)
 				if _, ok := bh.states[state]; ok {
 					continue
@@ -58,6 +57,32 @@ func (bh *BFSHelper) transform(root, node Node, path []int) {
 				bh.states[tree.ToBeautySQL(0)] = len(path) + 1
 				if len(bh.results) >= bh.nNneighbours {
 					return
+				}
+			}
+		}
+	case *Projector:
+		for _, r := range rules {
+			for i, expr := range t.Projections {
+				exprs := r.OneStep(expr, nil)
+				for _, proj := range exprs {
+					tree := root.Clone()
+					p := tree
+					for i := range path {
+						p = p.Children()[path[i]]
+					}
+					p.(*Projector).Projections[i] = proj
+
+					state := tree.ToBeautySQL(0)
+					if _, ok := bh.states[state]; ok {
+						continue
+					}
+
+					bh.fifo.PushBack(tree)
+					bh.results = append(bh.results, tree)
+					bh.states[tree.ToBeautySQL(0)] = len(path) + 1
+					if len(bh.results) >= bh.nNneighbours {
+						return
+					}
 				}
 			}
 		}
