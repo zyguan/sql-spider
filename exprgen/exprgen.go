@@ -56,7 +56,7 @@ func fillOrderBy(o *util.OrderBy, ts util.TableSchemas) {
 }
 
 func fillLimit(l *util.Limit) {
-	l.Limit = rand.Intn(100)
+	l.Limit = 1 + rand.Intn(100)
 }
 
 func fillTable(t *util.Table, ts util.TableSchemas) {
@@ -91,7 +91,7 @@ func fillAgg(a *util.Agg) {
 	if aggCols == 0 {
 		aggCols = 1
 	}
-	for i := 0; i < aggCols; i ++ {
+	for i := 0; i < aggCols; i++ {
 		colName := fmt.Sprint("c%d", i)
 		a.GroupByExprs = append(a.GroupByExprs, util.NewColumn(colName, cols[i].RetType()))
 	}
