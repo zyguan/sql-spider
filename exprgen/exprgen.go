@@ -140,7 +140,7 @@ func buildExpr(cols []util.Expr, tp util.TypeMask) util.Expr {
 					}
 				}
 				if len(cc) == 0 {
-					return nil
+					continue
 				}
 				return cc[rand.Intn(len(cc))]
 			case util.Const:
@@ -152,12 +152,17 @@ func buildExpr(cols []util.Expr, tp util.TypeMask) util.Expr {
 					n = rand.Intn(argsSpec.MaxArgs-argsSpec.MinArgs) + argsSpec.MinArgs
 				}
 				expr := &util.Func{Name: f}
+				ok := true
 				for i := 0; i < n; i++ {
 					subExpr := gen(lv+1, argsSpec.ArgTypeMask(i))
 					if subExpr == nil {
-						continue
+						ok = false
+						break
 					}
 					expr.AppendArg(subExpr)
+				}
+				if !ok {
+					continue
 				}
 				return expr
 			}
