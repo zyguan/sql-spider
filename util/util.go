@@ -147,7 +147,7 @@ func (c Column) RetType() Type {
 }
 
 type Node interface {
-	NumCols() int
+	Columns() []Expr
 	ToSQL() string
 	ToString() string
 	Children() []Node
@@ -182,8 +182,8 @@ type Filter struct {
 	Where Expr
 }
 
-func (f *Filter) NumCols() int {
-	return f.children[0].NumCols()
+func (f *Filter) Columns() []Expr {
+	return f.children[0].Columns()
 }
 
 func (f *Filter) ToSQL() string {
@@ -207,8 +207,8 @@ type Projector struct {
 	Projections []Expr
 }
 
-func (p *Projector) NumCols() int {
-	return len(p.Projections)
+func (p *Projector) Columns() []Expr {
+	return p.Projections
 }
 
 func (p *Projector) ToSQL() string {
@@ -240,8 +240,8 @@ type Agg struct {
 	GroupByExprs []Expr
 }
 
-func (a *Agg) NumCols() int {
-	return len(a.AggExprs) + len(a.GroupByExprs)
+func (a *Agg) Columns() []Expr {
+	return a.AggExprs
 }
 
 func (a *Agg) ToSQL() string {
@@ -253,6 +253,7 @@ func (a *Agg) Clone() Node {
 	//TBD
 	return nil
 }
+
 func (a *Agg) ToString() string {
 	return "Agg(" + a.children[0].ToString() + ")"
 }
@@ -262,18 +263,26 @@ type Join struct {
 	JoinCond Expr
 }
 
-func (j *Join) NumCols() int {
-	return j.children[0].NumCols() + j.children[1].NumCols()
+func (j *Join) Columns() []Expr {
+	exprs := make([]Expr, 0, len(j.children[0].Columns())+len(j.children[1].Columns()))
+	for _, expr := range j.children[0].Columns() {
+		exprs = append(exprs, expr)
+	}
+	for _, expr := range j.children[1].Columns() {
+		exprs = append(exprs, expr)
+	}
+	return exprs
 }
 
 func (j *Join) ToSQL() string {
 	l, r := j.children[0], j.children[1]
-	cols := make([]string, l.NumCols()+r.NumCols())
-	for i := 0; i < l.NumCols(); i++ {
+	lLen, rLen := len(l.Columns()), len(r.Columns())
+	cols := make([]string, lLen+rLen)
+	for i := 0; i < lLen; i++ {
 		cols[i] = "t1.c" + strconv.Itoa(i) + " AS " + "c" + strconv.Itoa(i)
 	}
-	for i := 0; i < r.NumCols(); i++ {
-		cols[i+l.NumCols()] = "t2.c" + strconv.Itoa(i) + " AS " + "c" + strconv.Itoa(i+l.NumCols())
+	for i := 0; i < rLen; i++ {
+		cols[i+lLen] = "t2.c" + strconv.Itoa(i) + " AS " + "c" + strconv.Itoa(i+lLen)
 	}
 	return "SELECT " + strings.Join(cols, ", ") + " FROM (" + l.ToSQL() + ") AS t1, (" + r.ToSQL() + ") AS t2 ON " + j.JoinCond.ToSQL()
 }
@@ -285,6 +294,7 @@ func (j *Join) Clone() Node {
 		//j.JoinCond.Clone(),
 	}
 }
+
 func (j *Join) ToString() string {
 	return "Join(" + j.children[0].ToString() + "," + j.children[1].ToString() + ")"
 }
@@ -293,17 +303,21 @@ type Table struct {
 	baseNode
 	Schema TableSchema
 
-	SelectedColumns []string
+	SelectedColumns []int
 }
 
-func (t *Table) NumCols() int {
-	return len(t.SelectedColumns)
+func (t *Table) Columns() []Expr {
+	cols := make([]Expr, len(t.SelectedColumns))
+	for i, idx := range t.SelectedColumns {
+		cols[i] = t.Schema.Columns[idx]
+	}
+	return cols
 }
 
 func (t *Table) ToSQL() string {
 	cols := make([]string, len(t.SelectedColumns))
-	for i, col := range t.SelectedColumns {
-		cols[i] = col + " AS c" + strconv.Itoa(i)
+	for i, idx := range t.SelectedColumns {
+		cols[i] = t.Schema.Columns[idx].col + " AS c" + strconv.Itoa(i)
 	}
 	return "SELECT " + strings.Join(cols, ", ") + " FROM " + t.Schema.Name
 }

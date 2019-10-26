@@ -1,9 +1,10 @@
 package exprgen
 
 import (
-	"fmt"
-	"github.com/zyguan/sqlgen/util"
 	"math/rand"
+	"strconv"
+
+	"github.com/zyguan/sqlgen/util"
 )
 
 func GenExprTrees(tree util.Tree, ts util.TableSchemas, n int) []util.Tree {
@@ -34,49 +35,46 @@ func fillNode(node util.Node, ts util.TableSchemas) {
 
 func fillTable(t *util.Table, ts util.TableSchemas) {
 	t.Schema = ts[rand.Intn(len(ts))]
-	t.SelectedColumns = make([]string, 0, len(t.Schema.Columns))
-	for _, col := range t.Schema.Columns {
+	t.SelectedColumns = make([]int, 0, len(t.Schema.Columns))
+	for i := range t.Schema.Columns {
 		if rand.Float64() < .5 {
-			t.SelectedColumns = append(t.SelectedColumns, col.ToSQL())
+			t.SelectedColumns = append(t.SelectedColumns, i)
 		}
 	}
 	if len(t.SelectedColumns) == 0 {
-		t.SelectedColumns = append(t.SelectedColumns, t.Schema.Columns[rand.Intn(len(t.Schema.Columns))].ToSQL())
+		t.SelectedColumns = append(t.SelectedColumns, rand.Intn(len(t.Schema.Columns)))
 	}
 }
 
 func fillProj(p *util.Projector) {
-	nCols := p.Children()[0].NumCols()
-	nProjected := rand.Intn(nCols * 2)
+	cols := p.Children()[0].Columns()
+	nProjected := rand.Intn(len(cols) * 2)
 	if nProjected == 0 {
 		nProjected = 1
 	}
 	p.Projections = make([]util.Expr, nProjected)
 	for i := 0; i < nProjected; i++ {
-		p.Projections[i] = buildExpr(nCols)
+		p.Projections[i] = buildExpr(cols, util.TypeDefault)
 	}
 }
 
 func fillJoin(j *util.Join) {
-	nLCols, nRCols := j.Children()[0].NumCols(), j.Children()[1].NumCols()
-	j.JoinCond = buildJoinCond(nLCols, nRCols)
+	j.JoinCond = buildJoinCond(j.Children()[0].Columns(), j.Children()[1].Columns())
 }
 
 func fillFilter(f *util.Filter) {
-	nCols := f.Children()[0].NumCols()
-	f.Where = buildExpr(nCols)
+	f.Where = buildExpr(f.Children()[0].Columns(), util.TypeNumber)
 }
 
-func buildJoinCond(nLCols, nRCols int) util.Expr {
-	lCol := fmt.Sprintf("t1.c%v", rand.Intn(nLCols))
-	rCol := fmt.Sprintf("t2.c%v", rand.Intn(nLCols))
+func buildJoinCond(lCols []util.Expr, rCols []util.Expr) util.Expr {
+	lIdx, rIdx := rand.Intn(len(lCols)), rand.Intn(len(rCols))
 	expr := &util.Func{Name: util.FuncEQ}
-	expr.AppendArg(util.Column(lCol))
-	expr.AppendArg(util.Column(rCol))
+	expr.AppendArg(util.Column{"t1.c" + strconv.Itoa(lIdx), lCols[lIdx].RetType()})
+	expr.AppendArg(util.Column{"t2.c" + strconv.Itoa(rIdx), rCols[rIdx].RetType()})
 	return expr
 }
 
-func buildExpr(nCols int, tp util.TypeMask) util.Expr {
+func buildExpr(cols []util.Expr, tp util.TypeMask) util.Expr {
 	var gen func(lv int, tp util.TypeMask) util.Expr
 	gen = func(lv int, tp util.TypeMask) util.Expr {
 		count := 10000
@@ -84,8 +82,16 @@ func buildExpr(nCols int, tp util.TypeMask) util.Expr {
 			count--
 			switch f := util.GenExprFromProbTable(lv); f {
 			case util.Col:
-				return nil // TODO
-				//return util.Column("c" + strconv.Itoa(rand.Intn(nCols)))
+				cc := make([]util.Expr, 0, len(cols))
+				for _, col := range cols {
+					if util.TypeMask(col.RetType())&tp > 0 {
+						cc = append(cc, col)
+					}
+				}
+				if len(cc) == 0 {
+					return nil
+				}
+				return cc[rand.Intn(len(cc))]
 			case util.Const:
 				return nil // TODO
 				//return util.Constant("'xxx'") // TODO
@@ -97,7 +103,7 @@ func buildExpr(nCols int, tp util.TypeMask) util.Expr {
 				}
 				expr := &util.Func{Name: f}
 				for i := 0; i < n; i++ {
-					subExpr := gen(lv+1, argsSpec.ArgType(i))
+					subExpr := gen(lv+1, argsSpec.ArgTypeMask(i))
 					if subExpr == nil {
 						continue
 					}
