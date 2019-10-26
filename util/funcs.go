@@ -11,12 +11,8 @@ const (
 	FuncIfnull          = "Ifnull"
 	FuncASCII           = "ASCII"
 	FuncBin             = "Bin"
-	FuncConcat          = "Concat"
-	FuncConcatWS        = "ConcatWS"
 	FuncConvert         = "Convert"
-	FuncElt             = "Elt"
 	FuncExportSet       = "ExportSet"
-	FuncField           = "Field"
 	FuncFormat          = "Format"
 	FuncFromBase64      = "FromBase64"
 	FuncInsertFunc      = "InsertFunc"
@@ -31,7 +27,6 @@ const (
 	FuncLpad            = "Lpad"
 	FuncLTrim           = "LTrim"
 	FuncMid             = "Mid"
-	FuncMakeSet         = "MakeSet"
 	FuncOct             = "Oct"
 	FuncOctetLength     = "OctetLength"
 	FuncOrd             = "Ord"
@@ -54,7 +49,6 @@ const (
 	FuncUnhex           = "Unhex"
 	FuncRpad            = "Rpad"
 	FuncBitLength       = "BitLength"
-	FuncCharFunc        = "CharFunc"
 	FuncCharLength      = "CharLength"
 	FuncCharacterLength = "CharacterLength"
 	FuncFindInSet       = "FindInSet"
@@ -113,11 +107,8 @@ const (
 	FuncUnaryMinus      = "UnaryMinus"
 	FuncIn              = "In"
 	FuncIsTruth         = "IsTruth"
-	FuncIsFalsity       = "IsFalsity"
 	FuncLike            = "Like"
 	FuncRegexp          = "Regexp"
-	FuncCase            = "Case"
-	FuncRowFunc         = "RowFunc"
 	FuncSetVar          = "SetVar"
 	FuncGetVar          = "GetVar"
 	FuncBitCount        = "BitCount"
@@ -163,6 +154,11 @@ func GenExprFromProbTable(level int) string {
 
 var NumArgs = map[string][]int{
 	FuncEQ:              {1, 1},
+	FuncGE:              {2, 2},
+	FuncLE:              {2, 2},
+	FuncNE:              {2, 2},
+	FuncLT:              {2, 2},
+	FuncGT:              {2, 2},
 	FuncIsTrue:          {1, 1},
 	FuncIf:              {3, 3},
 	FuncIfnull:          {2, 2},
