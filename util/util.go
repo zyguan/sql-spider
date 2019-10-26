@@ -260,7 +260,7 @@ func (o *OrderBy) ToSQL() string {
 	for _, e := range o.OrderByExprs {
 		orderBy = append(orderBy, e.ToSQL())
 	}
-	return "Select * from (" + o.children[0].ToString() + ") order by " + strings.Join(orderBy, ", ")
+	return "SELECT * FROM (" + o.children[0].ToSQL() + ") ORDER BY " + strings.Join(orderBy, ", ")
 }
 
 func (o *OrderBy) Clone() Node {
@@ -322,7 +322,7 @@ func (a *Agg) ToSQL() string {
 		groupBy = append(groupBy, e.ToSQL())
 	}
 
-	return "select " + strings.Join(aggs, ", ") + " from ( " + a.children[0].ToSQL() + ") group by " + strings.Join(groupBy, ", ")
+	return "SELECT " + strings.Join(aggs, ", ") + " FROM (" + a.children[0].ToSQL() + ") GROUP BY " + strings.Join(groupBy, ", ")
 }
 
 func (a *Agg) Clone() Node {

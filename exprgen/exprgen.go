@@ -51,8 +51,14 @@ func fillNode(node util.Node, ts util.TableSchemas) {
 }
 
 func fillOrderBy(o *util.OrderBy, ts util.TableSchemas) {
-	nCols := o.Children()[0].Columns()
-	o.OrderByExprs = nCols[:1]
+	for i, col := range o.Children()[0].Columns() {
+		o.OrderByExprs = append(o.OrderByExprs, util.NewColumn("c"+strconv.Itoa(i), col.RetType()))
+	}
+	if len(o.OrderByExprs) == 0 {
+		cols := o.Children()[0].Columns()
+		idx := rand.Intn(len(cols))
+		o.OrderByExprs = []util.Expr{util.NewColumn("c"+strconv.Itoa(idx), cols[idx].RetType())}
+	}
 }
 
 func fillLimit(l *util.Limit) {
@@ -92,11 +98,11 @@ func fillAgg(a *util.Agg) {
 		aggCols = 1
 	}
 	for i := 0; i < aggCols; i++ {
-		colName := fmt.Sprint("c%d", i)
+		colName := fmt.Sprintf("c%d", i)
 		a.GroupByExprs = append(a.GroupByExprs, util.NewColumn(colName, cols[i].RetType()))
 	}
 	for i := aggCols; i < chCols; i++ {
-		colName := fmt.Sprint("c%d", i)
+		colName := fmt.Sprintf("c%d", i)
 		expr := &util.Func{Name: util.GetAggExprFromPropTable()}
 		expr.AppendArg(util.NewColumn(colName, cols[i].RetType()))
 		a.AggExprs = append(a.AggExprs, expr)
