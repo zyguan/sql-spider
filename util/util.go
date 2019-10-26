@@ -232,6 +232,31 @@ func (p *Projector) ToString() string {
 	return "Projector(" + p.children[0].ToString() + ")"
 }
 
+type Agg struct {
+	baseNode
+	AggExprs []Expr
+}
+
+func (a *Agg) NumCols() int {
+	return len(a.AggExprs)
+}
+
+func (a *Agg) ToSQL() string {
+	//TBD
+	return ""
+}
+
+
+func (a *Agg) Clone() Node {
+	//TBD
+	return nil
+}
+func (a* Agg) ToString() string {
+	return "Agg(" + a.children[0].ToString() + ")"
+}
+
+
+
 type Join struct {
 	baseNode
 	JoinCond Expr
@@ -298,6 +323,7 @@ func (t *Table) Clone() Node {
 func (t *Table) ToString() string {
 	return "Table"
 }
+
 
 type TableSchema struct {
 	Name    string
