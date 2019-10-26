@@ -52,9 +52,8 @@ func fillNode(node util.Node, ts util.TableSchemas, isRoot bool) {
 }
 
 func fillOrderBy(o *util.OrderBy, ts util.TableSchemas) {
-	for _, col := range o.Children()[0].Columns() {
-		o.OrderByExprs = append(o.OrderByExprs, col)
-		//o.OrderByExprs = append(o.OrderByExprs, util.NewColumn("c"+strconv.Itoa(i), col.RetType()))
+	for i, col := range o.Children()[0].Columns() {
+		o.OrderByExprs = append(o.OrderByExprs, util.NewColumn("c"+strconv.Itoa(i), col.RetType()))
 	}
 }
 
@@ -115,10 +114,24 @@ func fillFilter(f *util.Filter) {
 
 func buildJoinCond(lCols []util.Expr, rCols []util.Expr) util.Expr {
 	lIdx, rIdx := rand.Intn(len(lCols)), rand.Intn(len(rCols))
-	expr := &util.Func{Name: util.FuncEQ}
+	expr := genJoinFunc()
 	expr.AppendArg(util.NewColumn("t1.c"+strconv.Itoa(lIdx), lCols[lIdx].RetType()))
 	expr.AppendArg(util.NewColumn("t2.c"+strconv.Itoa(rIdx), rCols[rIdx].RetType()))
 	return expr
+}
+
+func genJoinFunc() *util.Func {
+	allowFuncName := []string {
+		util.FuncGE,
+		util.FuncLE,
+		util.FuncEQ,
+		util.FuncNE,
+		util.FuncLT,
+		util.FuncGT,
+	}
+	return &util.Func{
+		Name: allowFuncName[rand.Intn(len(allowFuncName))],
+	}
 }
 
 func buildExpr(cols []util.Expr, tp util.TypeMask, validate util.ValidateExprFn) util.Expr {
