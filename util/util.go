@@ -48,7 +48,16 @@ func (b *baseNode) Children() []Node {
 
 type Filter struct {
 	baseNode
-	Where []Expr
+	Where Expr
+}
+
+func (f *Filter) NumCols() int {
+	return len(f.children)
+}
+
+func (f *Filter) ToSQL() string {
+	//TBD
+	return ""
 }
 
 type Projector struct {
@@ -56,14 +65,40 @@ type Projector struct {
 	Projections []Expr
 }
 
+func (p *Projector) NumCols() int {
+	return len(p.Projections)
+}
+func (f *Projector) ToSQL() string {
+	//TBD
+	return ""
+}
+
 type Join struct {
 	baseNode
 	JoinCond []Expr
 }
 
+func (j *Join) NumCols() int {
+	return j.children[0].NumCols() + j.children[1].NumCols()
+}
+
+func (j *Join) ToSQL() string {
+	//TBD
+	return ""
+}
+
 type Table struct {
 	baseNode
 	Columns []string
+}
+
+func (t *Table) NumCols() int {
+	return len(t.Columns)
+}
+
+func (t *Table) ToSQL() string {
+	//TBD
+	return ""
 }
 
 type TableSchema interface {
