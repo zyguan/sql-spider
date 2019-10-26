@@ -777,3 +777,22 @@ c0
 1.0000
 
 ```
+
+```
+> TREE
+Order(Agg(Filter(Agg(Table))))
+> SQL
+SELECT * FROM ( SELECT c0, AVG(c1) AS c1 FROM (
+SELECT * FROM (  SELECT c0, MIN(c1) AS c1 FROM (
+   SELECT col_int AS c0, col_double AS c1 FROM t
+  ) AS t GROUP BY c0) t WHERE ABS(c1)
+ ) AS t GROUP BY c0) t ORDER BY c0, c1
+> EXPECT
+c0	c1
+NULL	0.032719123098476945
+2147483647	0.0021056298625015814
+
+> ACTUAL
+c0	c1
+
+```
