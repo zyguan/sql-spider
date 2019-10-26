@@ -22,16 +22,48 @@ func (f *Func) Children() []Expr {
 }
 
 func (f *Func) ToSQL() string {
+	infixFn := func(op string) string {
+		return fmt.Sprintf("(%s) %s (%s)", f.children[0].ToSQL(), op, f.children[1].ToSQL())
+	}
 	switch f.Name {
 	case FuncEQ:
-		return fmt.Sprintf("(%s) = (%s)", f.children[0].ToSQL(), f.children[1].ToSQL())
-
+		return infixFn("=")
+	case FuncNE:
+		return infixFn("!=")
+	case FuncGE:
+		return infixFn(">=")
+	case FuncGT:
+		return infixFn(">")
+	case FuncLE:
+		return infixFn("<=")
+	case FuncLT:
+		return infixFn("<")
+	case FuncLogicOr:
+		return infixFn("OR")
+	case FuncLogicAnd:
+		return infixFn("AND")
+	case FuncLogicXor:
+		return infixFn("XOR")
+	case FuncPlus:
+		return infixFn("+")
+	case FuncMinus:
+		return infixFn("-")
+	case FuncUnaryMinus:
+		return "-(" + f.children[0].ToSQL() + ")"
+	case FuncDiv:
+		return infixFn("/")
+	case FuncMul:
+		return infixFn("*")
+	case FuncMod:
+		return infixFn("%")
+	case FuncIntDiv:
+		return infixFn("DIV")
 	default:
 		args := make([]string, len(f.children))
 		for i, e := range f.children {
 			args[i] = e.ToSQL()
 		}
-		return f.Name + "(" + strings.Join(args, ",") + ")"
+		return strings.ToUpper(f.Name) + "(" + strings.Join(args, ",") + ")"
 	}
 }
 

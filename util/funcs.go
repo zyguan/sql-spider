@@ -149,7 +149,6 @@ var NumArgs = map[string][]int{
 	FuncLeft:            {2, 2},
 	FuncRight:           {2, 2},
 	FuncLength:          {1, 1},
-	FuncLoadFile:        {1, 1},
 	FuncLocate:          {2, 3},
 	FuncLower:           {1, 1},
 	FuncLpad:            {3, 3},
