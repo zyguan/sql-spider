@@ -109,7 +109,7 @@ func fillJoin(j *util.Join) {
 }
 
 func fillFilter(f *util.Filter) {
-	f.Where = buildExpr(f.Children()[0].Columns(), util.TypeNumber, util.MustContainCols)
+	f.Where = buildExpr(f.Children()[0].Columns(), util.TypeNumber, util.Pass)
 }
 
 func buildJoinCond(lCols []util.Expr, rCols []util.Expr) util.Expr {
@@ -166,6 +166,9 @@ func buildExpr(cols []util.Expr, tp util.TypeMask, validate util.ValidateExprFn)
 					expr.AppendArg(subExpr)
 				}
 				if !ok {
+					continue
+				}
+				if lv == 0 && !validate(expr) {
 					continue
 				}
 				if fnSpec.Validate != nil && !fnSpec.Validate(expr) {
