@@ -30,6 +30,8 @@ func fillNode(node util.Node, ts util.TableSchemas) {
 		fillJoin(x)
 	case *util.Filter:
 		fillFilter(x)
+	case *util.Agg:
+		fillAgg(x)
 	}
 }
 
@@ -56,6 +58,24 @@ func fillProj(p *util.Projector) {
 	for i := 0; i < nProjected; i++ {
 		p.Projections[i] = buildExpr(nCols)
 	}
+}
+func fillAgg(a *util.Agg)  {
+	chCols := a.Children()[0].NumCols()
+	groupbyCols := rand.Intn(chCols)
+	if groupbyCols == 0 {
+		groupbyCols = 1
+	}
+	aggCols := chCols - groupbyCols
+	if aggCols == 0 {
+		aggCols = 1
+	}
+	children := a.Children()[0].Children()
+	allExprs := make([]util.Expr, chCols)
+	for i := 0;i < chCols;i ++ {
+		allExprs[i] = buildExpr(children[i].NumCols(), util.TypeDefault)
+	}
+	a.GroupByExprs = allExprs[0: groupbyCols]
+	a.AggExprs = allExprs[aggCols - 1: chCols]
 }
 
 func fillJoin(j *util.Join) {
