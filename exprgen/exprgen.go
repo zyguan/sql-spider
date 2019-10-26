@@ -35,6 +35,7 @@ func fillNode(node util.Node, ts util.TableSchemas) {
 }
 
 func fillTable(t *util.Table, ts util.TableSchemas) {
+	t.Schema = ts[rand.Intn(len(ts))]
 	t.SelectedColumns = make([]string, 0, len(t.Schema.Columns()))
 	for _, col := range t.Schema.Columns() {
 		if rand.Float64() < .5 {
@@ -68,7 +69,7 @@ func fillFilter(f *util.Filter) {
 func buildJoinCond(nLCols, nRCols int) util.Expr {
 	lCol := fmt.Sprintf("t1.c%v", rand.Intn(nLCols))
 	rCol := fmt.Sprintf("t2.c%v", rand.Intn(nLCols))
-	expr :=  &util.Func{Name: util.FuncEQ}
+	expr := &util.Func{Name: util.FuncEQ}
 	expr.AppendArg(util.Column(lCol))
 	expr.AppendArg(util.Column(rCol))
 	return expr
@@ -81,7 +82,7 @@ func buildExpr(nCols int) util.Expr {
 		case util.Col:
 			return util.Column("c" + strconv.Itoa(rand.Intn(nCols)))
 		case util.Const:
-			return util.Constant("'TODO'") // TODO
+			return util.Constant("'xxx'") // TODO
 		default:
 			argsSpec := util.NumArgs[f]
 			n := rand.Intn(argsSpec[1]-argsSpec[0]) + argsSpec[0]

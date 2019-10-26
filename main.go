@@ -13,7 +13,7 @@ func main() {
 	emptyTrees := nodegen.GenerateNode(3)
 	var trees []util.Tree
 	for _, et := range emptyTrees {
-		trees = append(trees, exprgen.GenExprTrees(et, ts)...)
+		trees = append(trees, exprgen.GenExprTrees(et, ts, 10)...)
 	}
 	for _, t := range trees {
 		fmt.Println(t.ToSQL())
