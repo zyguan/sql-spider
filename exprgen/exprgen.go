@@ -42,10 +42,16 @@ func fillTable(t *util.Table, ts util.TableSchemas) {
 			t.SelectedColumns = append(t.SelectedColumns, col.ToSQL())
 		}
 	}
+	if len(t.SelectedColumns) == 0 {
+		t.SelectedColumns = append(t.SelectedColumns, t.Schema.Columns[rand.Intn(len(t.Schema.Columns))].ToSQL())
+	}
 }
 
 func fillProj(p *util.Projector) {
 	nCols := p.Children()[0].NumCols()
+	if nCols == 0 {
+		fmt.Println(">>>")
+	}
 	nProjected := rand.Intn(nCols * 2)
 	if nProjected == 0 {
 		nProjected = 1
@@ -85,7 +91,10 @@ func buildExpr(nCols int) util.Expr {
 			return util.Constant("'xxx'") // TODO
 		default:
 			argsSpec := util.NumArgs[f]
-			n := rand.Intn(argsSpec[1]-argsSpec[0]) + argsSpec[0]
+			n := argsSpec[0]
+			if argsSpec[1] > argsSpec[0] {
+				n = rand.Intn(argsSpec[1]-argsSpec[0]) + argsSpec[0]
+			}
 			expr := &util.Func{Name: f}
 			for i := 0; i < n; i++ {
 				expr.AppendArg(gen(lv + 1))
