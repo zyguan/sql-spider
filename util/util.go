@@ -6,14 +6,29 @@ import (
 	"strings"
 )
 
+type Type int
+
+const (
+	ETInt = iota
+	ETReal
+	ETDecimal
+	ETString
+	ETDatetime
+	ETTimestamp
+	ETDuration
+	ETJson
+)
+
 type Expr interface {
 	ToSQL() string
 	Children() []Expr
 	Clone() Expr
+	RetType() Type
 }
 
 type Func struct {
 	Name     string
+	retType  Type
 	children []Expr
 }
 
@@ -78,36 +93,55 @@ func (f *Func) Clone() Expr {
 	}
 	return &Func{
 		Name:     f.Name,
+		retType:  f.retType,
 		children: xs,
 	}
 }
 
-type Constant string
+func (f *Func) RetType() Type {
+	return f.retType
+}
+
+type Constant struct {
+	val     string
+	retType Type
+}
 
 func (c Constant) Children() []Expr {
 	return nil
 }
 
 func (c Constant) ToSQL() string {
-	return string(c)
+	return c.val
 }
 
 func (c Constant) Clone() Expr {
 	return c
 }
 
-type Column string
+func (c Constant) RetType() Type {
+	return c.retType
+}
+
+type Column struct {
+	col     string
+	retType Type
+}
 
 func (c Column) Children() []Expr {
 	return nil
 }
 
 func (c Column) ToSQL() string {
-	return string(c)
+	return c.col
 }
 
 func (c Column) Clone() Expr {
 	return c
+}
+
+func (c Column) RetType() Type {
+	return c.retType
 }
 
 type Node interface {
