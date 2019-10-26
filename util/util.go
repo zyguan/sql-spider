@@ -114,6 +114,8 @@ func (f *Func) ToSQL() string {
 		return infixFn("%")
 	case FuncIntDiv:
 		return infixFn("DIV")
+	case FuncIsTrue:
+		return "(" + f.children[0].ToSQL() + ") is true"
 	default:
 		args := make([]string, len(f.children))
 		for i, e := range f.children {
