@@ -61,8 +61,6 @@ type Expr interface {
 	RetType() Type
 }
 
-
-
 type Func struct {
 	Name     string
 	retType  Type
@@ -180,7 +178,7 @@ func (c Constant) ToSQL() string {
 }
 
 func (c Constant) Clone() Expr {
-	return c
+	return Constant{c.val, c.retType}
 }
 
 func (c Constant) RetType() Type {
@@ -205,7 +203,7 @@ func (c Column) ToSQL() string {
 }
 
 func (c Column) Clone() Expr {
-	return c
+	return Column{c.col, c.retType}
 }
 
 func (c Column) RetType() Type {
@@ -286,10 +284,13 @@ func (f *Filter) ToBeautySQL(level int) string {
 }
 
 func (f *Filter) Clone() Node {
+	var where Expr
+	if f.Where != nil {
+		where = f.Where.Clone()
+	}
 	return &Filter{
 		*f.baseNode.clone(),
-		nil,
-		//f.Where.Clone(),
+		where,
 	}
 }
 
@@ -362,9 +363,13 @@ func (o *OrderBy) ToBeautySQL(level int) string {
 }
 
 func (o *OrderBy) Clone() Node {
+	orderBy := make([]Expr, 0, len(o.OrderByExprs))
+	for _, or := range o.OrderByExprs {
+		orderBy = append(orderBy, or.Clone())
+	}
 	return &OrderBy{
 		*o.baseNode.clone(),
-		nil,
+		orderBy,
 	}
 }
 
@@ -442,9 +447,18 @@ func (a *Agg) ToBeautySQL(level int) string {
 }
 
 func (a *Agg) Clone() Node {
+	aggExpr := make([]Expr, 0, len(a.AggExprs))
+	for _, agg := range a.AggExprs {
+		aggExpr = append(aggExpr, agg.Clone())
+	}
+	groupBy := make([]Expr, 0, len(a.GroupByExprs))
+	for _, gb := range a.GroupByExprs {
+		groupBy = append(groupBy, gb.Clone())
+	}
+
 	return &Agg{
 		*a.baseNode.clone(),
-		nil, nil,
+		aggExpr, groupBy,
 	}
 }
 
@@ -485,10 +499,13 @@ func (j *Join) ToBeautySQL(level int) string {
 }
 
 func (j *Join) Clone() Node {
+	var cond Expr
+	if j.JoinCond != nil {
+		cond = j.JoinCond.Clone()
+	}
 	return &Join{
 		*j.baseNode.clone(),
-		nil,
-		//j.JoinCond.Clone(),
+		cond,
 	}
 }
 
