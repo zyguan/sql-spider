@@ -22,22 +22,30 @@ func randomGenNode(level int, mask util.NodeTypeMask) util.Node {
 		Node util.Node
 		Prop float64
 	}
-	propTable := []Entry {
-		{&util.Join{}, 0.3 - 0.1*float64(level)},
-		{&util.Agg{}, 0.3 - 0.1*float64(level)},
-		{&util.Table{}, 0.1 + 0.15*float64(level)},
-	}
-	if !mask.Contain(util.NTProjector) {
-		propTable = append(propTable, Entry{&util.Projector{}, 0.2/* - 0.1*float64(level)*/})
-	}
-	if !mask.Contain(util.NTFilter) {
-		propTable = append(propTable, Entry{&util.Filter{}, 0.2/* + 0.15 *float64(level)*/})
-	}
-	if !mask.Contain(util.NTOrderBy) {
-		propTable = append(propTable, Entry{&util.OrderBy{}, 0.3/* - 0.1*float64(level)*/})
-	}
-	if !mask.Contain(util.NTLimit) {
-		propTable = append(propTable, Entry{&util.Limit{}, 0.3/* - 0.1 * float64(level)*/})
+	var propTable []Entry
+	if level == 0 {
+		propTable = []Entry {
+			{&util.OrderBy{}, 0.5},
+			{&util.Limit{}, 0.5},
+		}
+	} else {
+		propTable = []Entry {
+			{&util.Join{}, 0.4 - 0.1*float64(level)},
+			{&util.Agg{}, 0.4 - 0.1*float64(level)},
+			{&util.Table{}, 0.1 + 0.15*float64(level)},
+		}
+		if !mask.Contain(util.NTProjector) {
+			propTable = append(propTable, Entry{&util.Projector{}, 0.2/* - 0.1*float64(level)*/})
+		}
+		if !mask.Contain(util.NTFilter) {
+			propTable = append(propTable, Entry{&util.Filter{}, 0.2/* + 0.15 *float64(level)*/})
+		}
+		if !mask.Contain(util.NTOrderBy) {
+			propTable = append(propTable, Entry{&util.OrderBy{}, 0.3/* - 0.1*float64(level)*/})
+		}
+		if !mask.Contain(util.NTLimit) && !mask.Contain(util.NTOrderBy) {
+			propTable = append(propTable, Entry{&util.Limit{}, 0.3/* - 0.1 * float64(level)*/})
+		}
 	}
 
 	var total float64
@@ -58,12 +66,7 @@ func randomGenNode(level int, mask util.NodeTypeMask) util.Node {
 func (rn *RandomNodeGenerator) Generate(level int, mask util.NodeTypeMask) util.Node {
 	// random pick node type
 	var node util.Node
-	if level == 0 {
-		node = &util.OrderBy{}
-		mask.Add(util.NTOrderBy)
-	} else {
-		node = randomGenNode(level, mask)
-	}
+	node = randomGenNode(level, mask)
 	switch x := node.(type) {
 	case *util.Table:
 	case *util.Filter:
