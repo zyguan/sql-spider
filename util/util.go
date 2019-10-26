@@ -11,6 +11,9 @@ type Type uint
 type TypeMask uint
 
 func (tm TypeMask) Contain(t Type) bool {
+	if t == 0 {
+		panic("??")
+	}
 	return uint(tm)&uint(t) > 0
 }
 
@@ -119,7 +122,7 @@ func (f *Func) ToSQL() string {
 	case FuncIntDiv:
 		return infixFn("DIV")
 	case FuncIsTrue:
-		return "(" + f.children[0].ToSQL() + ") is true"
+		return "((" + f.children[0].ToSQL() + ") is true)"
 	default:
 		args := make([]string, len(f.children))
 		for i, e := range f.children {
