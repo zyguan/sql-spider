@@ -150,6 +150,7 @@ type FuncInfo struct {
 const (
 	TypeDefault = TypeMask(ETInt | ETReal | ETDecimal | ETString | ETDatetime)
 	TypeNumber  = TypeMask(ETInt | ETReal | ETDecimal)
+	TypeString  = TypeMask(ETString)
 	TypeTime    = TypeMask(ETDatetime)
 )
 
@@ -182,10 +183,11 @@ var FuncInfos = map[string]FuncInfo{
 	FuncIsTrue: {FuncIsTrue, 1, 1, nil, TypeDefault},
 	FuncIf:     {FuncIf, 3, 3, nil, TypeDefault},
 	FuncIfnull: {FuncIfnull, 2, 2, nil, TypeDefault},
+	FuncLcase:  {FuncLcase, 1, 1, []TypeMask{TypeString}, TypeString},
 
 	FuncPow:   {FuncPow, 2, 2, []TypeMask{TypeNumber, TypeNumber}, TypeNumber},
-	FuncLower: {FuncLower, 1, 1, []TypeMask{TypeMask(ETString)}, TypeMask(ETString)},
-	FuncUpper: {FuncUpper, 1, 1, []TypeMask{TypeMask(ETString)}, TypeMask(ETString)},
+	FuncLower: {FuncLower, 1, 1, []TypeMask{TypeString}, TypeString},
+	FuncUpper: {FuncUpper, 1, 1, []TypeMask{TypeString}, TypeString},
 }
 
 //var NumArgs = map[string][]int{
