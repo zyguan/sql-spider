@@ -134,7 +134,7 @@ func buildExpr(cols []util.Expr, tp util.TypeMask) util.Expr {
 					}
 				}
 				if len(cc) == 0 {
-					return nil
+					continue
 				}
 				return cc[rand.Intn(len(cc))]
 			case util.Const:
