@@ -12,10 +12,13 @@ import (
 
 func getTableSchemas() util.TableSchemas {
 	return util.TableSchemas{
-		{Name: "t1",
-			Columns: []util.Column{"a", "b"}},
-		{Name: "t2",
-			Columns: []util.Column{"a"}},
+		{Name: "t",
+			Columns: []util.Column{
+				util.NewColumn("col_int", util.ETInt),
+				util.NewColumn("col_double", util.ETReal),
+				util.NewColumn("col_decimal", util.ETDecimal),
+				util.NewColumn("col_string", util.ETString),
+			}},
 	}
 }
 
