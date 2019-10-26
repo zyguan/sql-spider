@@ -3,6 +3,7 @@ package exprgen
 import (
 	"fmt"
 	"github.com/zyguan/sqlgen/util"
+	"math"
 	"math/rand"
 )
 
@@ -87,8 +88,7 @@ func buildExpr(nCols int, tp util.TypeMask) util.Expr {
 				return nil // TODO
 				//return util.Column("c" + strconv.Itoa(rand.Intn(nCols)))
 			case util.Const:
-				return nil // TODO
-				//return util.Constant("'xxx'") // TODO
+				return genConstant(tp)
 			default:
 				argsSpec := util.FuncInfos[f]
 				n := argsSpec.MinArgs
@@ -109,4 +109,38 @@ func buildExpr(nCols int, tp util.TypeMask) util.Expr {
 		panic("???")
 	}
 	return gen(0, tp)
+}
+
+func genConstant(tp util.TypeMask) util.Constant {
+	t := rand.Intn(30)
+	var c util.Constant
+	if t < 10 && tp.Contain(util.ETInt) {
+		c.T = util.ETInt
+		c.Val = genIntLiteral()
+	} else if t < 20 && tp.Contain(util.ETReal) {
+		c.T = util.ETReal
+		c.Val = genRealLiteral()
+	} else {
+		c.T = util.ETString
+		c.Val = genStringLiteral()
+	}
+	return c
+}
+
+func genIntLiteral() string {
+	return fmt.Sprintf("%v", int64(float64(math.MaxInt64)*rand.Float64()))
+}
+
+func genRealLiteral() string {
+	return fmt.Sprintf("%v", math.MaxFloat64*rand.Float64())
+}
+
+func genStringLiteral() string {
+	n := rand.Intn(10) + 1
+	buf := make([]byte, 0, n)
+	for i := 0; i < n; i ++ {
+		x := rand.Intn(26)
+		buf = append(buf, byte('a'+x))
+	}
+	return string(buf)
 }
