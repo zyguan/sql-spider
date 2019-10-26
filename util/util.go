@@ -272,9 +272,6 @@ func (f *Filter) ToSQL() string {
 }
 func (f *Filter) ToBeautySQL(level int) string {
 	return f.children[0].ToBeautySQL(level) + " WHERE " + f.Where.ToSQL()
-	//	return strings.Repeat(" ", level) + "SELECT * FROM (\n" +
-	//		f.children[0].ToBeautySQL(level+1) + "\n" +
-	//		strings.Repeat(" ", level) + ") WHERE " + f.Where.ToSQL()
 }
 
 func (f *Filter) Clone() Node {
@@ -317,7 +314,7 @@ func (p *Projector) ToBeautySQL(level int) string {
 	}
 	return strings.Repeat(" ", level) + "SELECT " + strings.Join(cols, ", ") + " FROM (\n" +
 		p.children[0].ToBeautySQL(level+1) + "\n" +
-		strings.Repeat(" ", level) + ")"
+		strings.Repeat(" ", level) + ") AS t"
 }
 
 func (p *Projector) Clone() Node {
@@ -359,9 +356,6 @@ func (o *OrderBy) ToBeautySQL(level int) string {
 		orderBy = append(orderBy, e.ToSQL())
 	}
 	return o.children[0].ToBeautySQL(level) + " ORDER BY " + strings.Join(orderBy, ", ")
-	//return strings.Repeat(" ", level) + "SELECT * FROM (\n" +
-	//	o.children[0].ToBeautySQL(level+1) + "\n" +
-	//	strings.Repeat(" ", level) + ") ORDER BY " + strings.Join(orderBy, ", ")
 }
 
 func (o *OrderBy) Clone() Node {
@@ -399,9 +393,6 @@ func (l *Limit) ToSQL() string {
 
 func (l *Limit) ToBeautySQL(level int) string {
 	return l.children[0].ToBeautySQL(level) + " LIMIT " + strconv.Itoa(l.Limit)
-	//	return strings.Repeat(" ", level) + "SELECT * FROM (\n" +
-	//		l.children[0].ToBeautySQL(level + 1) + "\n" +
-	//		strings.Repeat(" ", level) + ") LIMIT " + strconv.Itoa(l.Limit)
 }
 
 func (l *Limit) Clone() Node {
@@ -458,7 +449,7 @@ func (a *Agg) ToBeautySQL(level int) string {
 	}
 	return strings.Repeat(" ", level) + "SELECT " + strings.Join(aggs, ", ") + " FROM (\n" +
 		a.children[0].ToBeautySQL(level+1) + "\n" +
-		strings.Repeat(" ", level) + ") GROUP BY " + strings.Join(groupBy, ", ")
+		strings.Repeat(" ", level) + ") AS t GROUP BY " + strings.Join(groupBy, ", ")
 }
 
 func (a *Agg) Clone() Node {
