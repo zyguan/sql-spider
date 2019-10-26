@@ -8,11 +8,31 @@ import (
 type Expr interface {
 	ToSQL() string
 	Children() []Expr
+	Clone() Expr
 }
 
 type Func struct {
 	Name     string
 	children []Expr
+}
+
+func (f *Func) Children() []Expr {
+	return f.children
+}
+
+func (f *Func) ToSQL() string {
+	return "" // TODO
+}
+
+func (f *Func) Clone() Expr {
+	xs := make([]Expr, 0, len(f.children))
+	for _, c := range f.children {
+		xs = append(xs, c.Clone())
+	}
+	return &Func{
+		Name:     f.Name,
+		children: xs,
+	}
 }
 
 type Constant string
@@ -25,6 +45,10 @@ func (c Constant) ToSQL() string {
 	return string(c)
 }
 
+func (c Constant) Clone() Expr {
+	return c
+}
+
 type Column string
 
 func (c Column) Children() []Expr {
@@ -35,10 +59,15 @@ func (c Column) ToSQL() string {
 	return string(c)
 }
 
+func (c Column) Clone() Expr {
+	return c
+}
+
 type Node interface {
 	NumCols() int
 	ToSQL() string
 	Children() []Node
+	Clone() Node
 }
 
 type Tree Node
@@ -49,6 +78,14 @@ type baseNode struct {
 
 func (b *baseNode) Children() []Node {
 	return b.children
+}
+
+func (b *baseNode) clone() *baseNode {
+	xs := make([]Node, 0, len(b.children))
+	for _, c := range b.children {
+		xs = append(xs, c.Clone())
+	}
+	return &baseNode{xs}
 }
 
 type Filter struct {
@@ -62,6 +99,13 @@ func (f *Filter) NumCols() int {
 
 func (f *Filter) ToSQL() string {
 	return "SELECT * FROM (" + f.children[0].ToSQL() + ") WHERE " + f.Where.ToSQL()
+}
+
+func (f *Filter) Clone() Node {
+	return &Filter{
+		*f.baseNode.clone(),
+		f.Where.Clone(),
+	}
 }
 
 type Projector struct {
@@ -79,6 +123,17 @@ func (p *Projector) ToSQL() string {
 		cols[i] = e.ToSQL() + " AS c" + strconv.Itoa(i)
 	}
 	return "SELECT " + strings.Join(cols, ", ") + " FROM (" + p.children[0].ToSQL() + ")"
+}
+
+func (p *Projector) Clone() Node {
+	ps := make([]Expr, 0, len(p.Projections))
+	for _, x := range p.Projections {
+		ps = append(ps, x.Clone())
+	}
+	return &Projector{
+		*p.baseNode.clone(),
+		ps,
+	}
 }
 
 type Join struct {
@@ -102,6 +157,13 @@ func (j *Join) ToSQL() string {
 	return "SELECT " + strings.Join(cols, ", ") + " FROM (" + l.ToSQL() + ") AS t1, (" + r.ToSQL() + ") AS t2 ON " + j.JoinCond.ToSQL()
 }
 
+func (j *Join) Clone() Node {
+	return &Join{
+		*j.baseNode.clone(),
+		j.JoinCond.Clone(),
+	}
+}
+
 type Table struct {
 	baseNode
 	Schema TableSchema
@@ -119,6 +181,18 @@ func (t *Table) ToSQL() string {
 		cols[i] = col + " AS c" + strconv.Itoa(i)
 	}
 	return "SELECT " + strings.Join(cols, ", ") + " FROM (" + t.Schema.Name() + ")"
+}
+
+func (t *Table) Clone() Node {
+	t1 := &Table{
+		*t.baseNode.clone(),
+		t.Schema,
+		nil,
+	}
+	for _, s := range t.SelectedColumns {
+		t1.SelectedColumns = append(t1.SelectedColumns, s)
+	}
+	return t1
 }
 
 type TableSchema interface {
