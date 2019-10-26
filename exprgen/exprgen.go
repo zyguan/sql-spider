@@ -44,22 +44,15 @@ func fillNode(node util.Node, ts util.TableSchemas, isRoot bool) {
 	case *util.Agg:
 		fillAgg(x)
 	case *util.OrderBy:
-		fillOrderBy(x, ts, isRoot)
+		fillOrderBy(x, ts)
 	case *util.Limit:
 		fillLimit(x)
 	}
 }
 
-func fillOrderBy(o *util.OrderBy, ts util.TableSchemas, isRoot bool) {
+func fillOrderBy(o *util.OrderBy, ts util.TableSchemas) {
 	for i, col := range o.Children()[0].Columns() {
-		if isRoot || rand.Float64() < 0.5 {
-			o.OrderByExprs = append(o.OrderByExprs, util.NewColumn("c"+strconv.Itoa(i), col.RetType()))
-		}
-	}
-	if len(o.OrderByExprs) == 0 {
-		cols := o.Children()[0].Columns()
-		idx := rand.Intn(len(cols))
-		o.OrderByExprs = []util.Expr{util.NewColumn("c"+strconv.Itoa(idx), cols[idx].RetType())}
+		o.OrderByExprs = append(o.OrderByExprs, util.NewColumn("c"+strconv.Itoa(i), col.RetType()))
 	}
 }
 
