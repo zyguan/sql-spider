@@ -268,10 +268,14 @@ func (f *Filter) Columns() []Expr {
 
 func (f *Filter) ToSQL() string {
 	return f.children[0].ToSQL() + " WHERE " + f.Where.ToSQL()
-	//return "SELECT * FROM (" + f.children[0].ToSQL() + ") WHERE " + f.Where.ToSQL()
 }
 func (f *Filter) ToBeautySQL(level int) string {
-	return f.children[0].ToBeautySQL(level) + " WHERE " + f.Where.ToSQL()
+	key := " WHERE "
+	if _, ok := f.children[0].(*Join); ok {
+		key = " AND "
+	}
+
+	return f.children[0].ToBeautySQL(level) + key + f.Where.ToSQL()
 }
 
 func (f *Filter) Clone() Node {
