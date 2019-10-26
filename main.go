@@ -18,6 +18,7 @@ func getTableSchemas() util.TableSchemas {
 				util.NewColumn("col_double", util.ETReal),
 				util.NewColumn("col_decimal", util.ETDecimal),
 				util.NewColumn("col_string", util.ETString),
+				util.NewColumn("col_datetime", util.ETDatetime),
 			}},
 	}
 }
@@ -44,7 +45,7 @@ func safePrint(t util.Tree) {
 		}
 	}()
 	//fmt.Println(t.ToSQL())
-	fmt.Println(t.ToBeautySQL(0))
+	fmt.Println(t.ToBeautySQL(0) + ";")
 	fmt.Println()
 }
 
