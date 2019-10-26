@@ -92,19 +92,18 @@ func fillProj(p *util.Projector) {
 
 func fillAgg(a *util.Agg) {
 	cols := a.Children()[0].Columns()
-	chCols := len(a.Children()[0].Columns())
-	aggCols := rand.Intn(chCols)
+	nCols := len(cols)
+	aggCols := rand.Intn(nCols)
 	if aggCols == 0 {
 		aggCols = 1
 	}
 	for i := 0; i < aggCols; i++ {
-		colName := fmt.Sprintf("c%d", i)
-		a.GroupByExprs = append(a.GroupByExprs, util.NewColumn(colName, cols[i].RetType()))
+		a.GroupByExprs = append(a.GroupByExprs, cols[i])
 	}
-	for i := aggCols; i < chCols; i++ {
-		colName := fmt.Sprintf("c%d", i)
+	for i := aggCols; i < nCols; i++ {
+		col := cols[i]
 		expr := &util.Func{Name: util.GetAggExprFromPropTable()}
-		expr.AppendArg(util.NewColumn(colName, cols[i].RetType()))
+		expr.AppendArg(col)
 		a.AggExprs = append(a.AggExprs, expr)
 	}
 }
@@ -204,5 +203,5 @@ func genStringLiteral() string {
 		x := rand.Intn(26)
 		buf = append(buf, byte('a'+x))
 	}
-	return string(buf)
+	return "'" + string(buf) + "'"
 }
