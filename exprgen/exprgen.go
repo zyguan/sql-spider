@@ -82,7 +82,7 @@ func fillProj(p *util.Projector) {
 	}
 	p.Projections = make([]util.Expr, nProjected)
 	for i := 0; i < nProjected; i++ {
-		p.Projections[i] = buildExpr(cols, util.TypeDefault, util.Pass)
+		p.Projections[i] = buildExpr(cols, util.TypeDefault, util.MustContainCols)
 	}
 }
 
@@ -110,7 +110,7 @@ func fillJoin(j *util.Join) {
 }
 
 func fillFilter(f *util.Filter) {
-	f.Where = buildExpr(f.Children()[0].Columns(), util.TypeNumber, util.Pass)
+	f.Where = buildExpr(f.Children()[0].Columns(), util.TypeNumber, util.MustContainCols)
 }
 
 func buildJoinCond(lCols []util.Expr, rCols []util.Expr) util.Expr {
