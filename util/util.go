@@ -63,15 +63,6 @@ func (f *Func) Children() []Expr {
 }
 
 func (f *Func) ToSQL() string {
-	defer func() {
-		if r := recover(); r != nil {
-			fmt.Println("====================================")
-			fmt.Println(f.Name, f.children)
-			fmt.Println("====================================")
-			panic("???")
-		}
-	}()
-
 	infixFn := func(op string) string {
 		return fmt.Sprintf("(%s %s %s)", f.children[0].ToSQL(), op, f.children[1].ToSQL())
 	}
@@ -194,6 +185,7 @@ func (c Column) RetType() Type {
 type Node interface {
 	Columns() []Expr
 	ToSQL() string
+	ToBeautySQL(level int) string
 	ToString() string
 	Children() []Node
 	Clone() Node
@@ -262,6 +254,11 @@ func (f *Filter) Columns() []Expr {
 func (f *Filter) ToSQL() string {
 	return "SELECT * FROM (" + f.children[0].ToSQL() + ") WHERE " + f.Where.ToSQL()
 }
+func (f *Filter) ToBeautySQL(level int) string {
+	return strings.Repeat(" ", level) + "SELECT * FROM (\n" +
+		strings.Repeat(" ", level + 1) + f.children[0].ToBeautySQL(level + 1) +
+		") WHERE " + f.Where.ToSQL()
+}
 
 func (f *Filter) Clone() Node {
 	return &Filter{
@@ -296,6 +293,15 @@ func (p *Projector) ToSQL() string {
 	return "SELECT " + strings.Join(cols, ", ") + " FROM (" + p.children[0].ToSQL() + ")"
 }
 
+func (p *Projector) ToBeautySQL(level int) string {
+	cols := make([]string, len(p.Projections))
+	for i, e := range p.Projections {
+		cols[i] = e.ToSQL() + " AS c" + strconv.Itoa(i)
+	}
+	return strings.Repeat(" ", level) + "SELECT " + strings.Join(cols, ", ") + "FROM (" +
+		strings.Repeat(" ", level + 1) + p.children[0].ToBeautySQL(level + 1) + ")"
+}
+
 func (p *Projector) Clone() Node {
 	ps := make([]Expr, 0, len(p.Projections))
 	for _, x := range p.Projections {
@@ -328,6 +334,16 @@ func (o *OrderBy) ToSQL() string {
 	return "SELECT * FROM (" + o.children[0].ToSQL() + ") ORDER BY " + strings.Join(orderBy, ", ")
 }
 
+func (o *OrderBy) ToBeautySQL(level int) string {
+	orderBy := make([]string, 0, len(o.OrderByExprs))
+	for _, e := range o.OrderByExprs {
+		orderBy = append(orderBy, e.ToSQL())
+	}
+	return strings.Repeat(" ", level) + "SELECT * FROM (\n" +
+		strings.Repeat(" ", level + 1) + o.children[0].ToBeautySQL(level + 1) + "\n" +
+		strings.Repeat(" ", level) + ") ORDER BY " + strings.Join(orderBy, ", ")
+}
+
 func (o *OrderBy) Clone() Node {
 	return &OrderBy{
 		*o.baseNode.clone(),
@@ -336,6 +352,14 @@ func (o *OrderBy) Clone() Node {
 }
 
 func (o *OrderBy) ToString() string {
+	defer func() {
+		if r := recover(); r!= nil {
+			fmt.Println("=======")
+			fmt.Printf("child:%d", len(o.children))
+			fmt.Println("=======")
+			panic("wocao order")
+		}
+	}()
 	return "Order(" + o.children[0].ToString() + ")"
 }
 
@@ -350,6 +374,11 @@ func (l *Limit) Columns() []Expr {
 
 func (l *Limit) ToSQL() string {
 	return "SELECT * FROM (" + l.children[0].ToSQL() + ") LIMIT " + strconv.Itoa(l.Limit)
+}
+
+func (l *Limit) ToBeautySQL(level int) string {
+	return strings.Repeat(" ", level) + "SELECT * FROM (\n" +
+		strings.Repeat(" ", level + 1) + l.children[0].ToBeautySQL(level + 1) + ") LIMIT " + strconv.Itoa(l.Limit)
 }
 
 func (l *Limit) Clone() Node {
@@ -388,6 +417,20 @@ func (a *Agg) ToSQL() string {
 	}
 
 	return "SELECT " + strings.Join(aggs, ", ") + " FROM (" + a.children[0].ToSQL() + ") GROUP BY " + strings.Join(groupBy, ", ")
+}
+
+func (a *Agg) ToBeautySQL(level int) string {
+	ret := a.Columns()
+	aggs := make([]string, 0, len(ret))
+	for _, e := range ret {
+		aggs = append(aggs, e.ToSQL())
+	}
+	groupBy := make([]string, 0, len(a.GroupByExprs))
+	for _, e := range a.GroupByExprs {
+		groupBy = append(groupBy, e.ToSQL())
+	}
+	return strings.Repeat(" ", level) + "SELECT " + strings.Join(aggs, ", ") +
+		strings.Repeat(" ", level + 1) + " FROM (" + a.children[0].ToBeautySQL(level + 1) + ") GROUP BY " + strings.Join(groupBy, ", ")
 }
 
 func (a *Agg) Clone() Node {
@@ -430,6 +473,22 @@ func (j *Join) ToSQL() string {
 	return "SELECT " + strings.Join(cols, ", ") + " FROM (" + l.ToSQL() + ") AS t1, (" + r.ToSQL() + ") AS t2 ON " + j.JoinCond.ToSQL()
 }
 
+func (j *Join) ToBeautySQL(level int) string {
+	l, r := j.children[0], j.children[1]
+	lLen, rLen := len(l.Columns()), len(r.Columns())
+	cols := make([]string, lLen+rLen)
+	for i := 0; i < lLen; i++ {
+		cols[i] = "t1.c" + strconv.Itoa(i) + " AS " + "c" + strconv.Itoa(i)
+	}
+	for i := 0; i < rLen; i++ {
+		cols[i+lLen] = "t2.c" + strconv.Itoa(i) + " AS " + "c" + strconv.Itoa(i+lLen)
+	}
+	return strings.Repeat(" ", level) + "SELECT " + strings.Join(cols, ",") + " FROM (" +
+		strings.Repeat(" ", level + 1) + l.ToBeautySQL(level + 1) + ") AS t1,\n" +
+		strings.Repeat(" ", level + 1) + r.ToBeautySQL(level + 1) + ") AS t2 ON\n" +
+		strings.Repeat(" ", level + 1) + j.JoinCond.ToSQL()
+}
+
 func (j *Join) Clone() Node {
 	return &Join{
 		*j.baseNode.clone(),
@@ -463,6 +522,14 @@ func (t *Table) ToSQL() string {
 		cols[i] = t.Schema.Columns[idx].col + " AS c" + strconv.Itoa(i)
 	}
 	return "SELECT " + strings.Join(cols, ", ") + " FROM " + t.Schema.Name
+}
+
+func (t *Table) ToBeautySQL(level int) string {
+	cols := make([]string, len(t.SelectedColumns))
+	for i, idx := range t.SelectedColumns {
+		cols[i] = t.Schema.Columns[idx].col + " AS c" + strconv.Itoa(i)
+	}
+	return strings.Repeat(" ", level) + "SELECT " + strings.Join(cols, ", ") + " FROM " + t.Schema.Name
 }
 
 func (t *Table) Clone() Node {

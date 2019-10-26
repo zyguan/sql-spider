@@ -73,9 +73,12 @@ func (rn *RandomNodeGenerator) Generate(level int, mask util.NodeTypeMask) util.
 	case *util.OrderBy:
 		x.AddChild(rn.Generate(level+1, mask.Add(util.NTOrderBy)))
 	case *util.Limit:
-		x.AddChild(&util.OrderBy{})
-		mask.Add(util.NTLimit | util.NTOrderBy)
-		x.Children()[0].AddChild(rn.Generate(level+2, mask))
+		o := &util.OrderBy{}
+		o.AddChild(rn.Generate(level+2, mask.Add(util.NTLimit | util.NTOrderBy)))
+		x.AddChild(o)
+		//x.AddChild(&util.OrderBy{})
+		//mask.Add(util.NTLimit | util.NTOrderBy)
+		//x.Children()[0].AddChild(rn.Generate(level+2, mask))
 	case *util.Agg:
 		mask.Remove(util.NTFilter | util.NTProjector | util.NTOrderBy | util.NTLimit)
 		mask.Add(util.NTAgg)
