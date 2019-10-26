@@ -114,7 +114,8 @@ func (f *Filter) ToSQL() string {
 func (f *Filter) Clone() Node {
 	return &Filter{
 		*f.baseNode.clone(),
-		f.Where.Clone(),
+		nil,
+		//f.Where.Clone(),
 	}
 }
 
@@ -178,7 +179,8 @@ func (j *Join) ToSQL() string {
 func (j *Join) Clone() Node {
 	return &Join{
 		*j.baseNode.clone(),
-		j.JoinCond.Clone(),
+		nil,
+		//j.JoinCond.Clone(),
 	}
 }
 func (j *Join) ToString() string {
