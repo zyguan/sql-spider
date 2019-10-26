@@ -43,7 +43,7 @@ SELECT * FROM (  SELECT SIN(IFNULL(c0, DAYOFWEEK('1999-12-01 12:50:06'))) AS c0 
   
 MySQL 返回空结果无报错，TiDB panic；
 
-定位后发现是处理 LogicalOr 改写逻辑有问题， 导致子表达式没有被赋值，出现空指针；
+定位后发现是处理 c0 OR WEEKOFYEAR('2017-04-18 19:15:51') 改写逻辑有问题， 导致子表达式没有被赋值，出现空指针；
 
 
 case 4 <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
@@ -97,7 +97,7 @@ SELECT * FROM (SELECT * FROM ( SELECT AVG(c0) AS c0 FROM (
  
 MySQL 返回 0.2473，TiDB 返回 1.0000;
 
-初步定位是 c0 和 UPPER(...) 字符串比较有 corner case 导致不稳定，具体原因还在查；
+定位是 c0 和 UPPER(...) 字符串比较有 corner case 结果和 MySQL 不一致，具体原因还在查；
 
 
 case 8 <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
@@ -110,4 +110,4 @@ SELECT * FROM (  SELECT c0, MIN(c1) AS c1 FROM (
 
 MySQL 返回 2 行，TiDB 返回 0 行；
 
-定位是在 TiDB 中把 ABS(c1) 作为 WHERE 条件进行 bool 判断时出错；
+定位是 c1 是 double 类型，在 TiDB 中把 ABS(c1) 作为 WHERE 条件进行 bool 判断时出错；
