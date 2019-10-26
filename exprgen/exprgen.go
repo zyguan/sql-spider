@@ -173,7 +173,7 @@ func genConstant(tp util.TypeMask) util.Constant {
 	var cv string
 	tps := tp.All()
 
-	t := rand.Intn(len(tps))
+	t := rand.Intn(len(tps) + 1)
 	if t == len(tps) {
 		ct = tp.Any()
 		cv = "NULL"
