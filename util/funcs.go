@@ -48,6 +48,6 @@ func GenExprFromProbTable(level int) string {
 }
 
 var NumArgs = map[string][]int{
-	FuncEQ:     {1, 1},
+	FuncEQ:     {2, 2},
 	FuncIsTrue: {1, 1},
 }

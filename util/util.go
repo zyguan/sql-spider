@@ -1,6 +1,7 @@
 package util
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
 )
@@ -21,7 +22,17 @@ func (f *Func) Children() []Expr {
 }
 
 func (f *Func) ToSQL() string {
-	return "" // TODO
+	switch f.Name {
+	case FuncEQ:
+		return fmt.Sprintf("(%s) = (%s)", f.children[0].ToSQL(), f.children[1].ToSQL())
+
+	default:
+		args := make([]string, len(f.children))
+		for i, e := range f.children {
+			args[i] = e.ToSQL()
+		}
+		return f.Name + "(" + strings.Join(args, ",") + ")"
+	}
 }
 
 func (f *Func) AppendArg(expr Expr) {
@@ -171,7 +182,7 @@ func (j *Join) ToSQL() string {
 		cols[i] = "t1.c" + strconv.Itoa(i) + " AS " + "c" + strconv.Itoa(i)
 	}
 	for i := 0; i < r.NumCols(); i++ {
-		cols[i] = "t2.c" + strconv.Itoa(i) + " AS " + "c" + strconv.Itoa(i+l.NumCols())
+		cols[i+l.NumCols()] = "t2.c" + strconv.Itoa(i) + " AS " + "c" + strconv.Itoa(i+l.NumCols())
 	}
 	return "SELECT " + strings.Join(cols, ", ") + " FROM (" + l.ToSQL() + ") AS t1, (" + r.ToSQL() + ") AS t2 ON " + j.JoinCond.ToSQL()
 }

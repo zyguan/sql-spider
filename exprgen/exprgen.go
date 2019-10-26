@@ -49,9 +49,6 @@ func fillTable(t *util.Table, ts util.TableSchemas) {
 
 func fillProj(p *util.Projector) {
 	nCols := p.Children()[0].NumCols()
-	if nCols == 0 {
-		fmt.Println(">>>")
-	}
 	nProjected := rand.Intn(nCols * 2)
 	if nProjected == 0 {
 		nProjected = 1

@@ -2,6 +2,8 @@ package main
 
 import (
 	"fmt"
+	"math/rand"
+	"time"
 
 	"github.com/zyguan/sqlgen/exprgen"
 	"github.com/zyguan/sqlgen/nodegen"
@@ -27,4 +29,8 @@ func main() {
 	for _, t := range trees {
 		fmt.Println(t.ToSQL())
 	}
+}
+
+func init() {
+	rand.Seed(time.Now().UnixNano())
 }
