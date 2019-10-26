@@ -5,8 +5,10 @@ import (
 	"database/sql"
 	"flag"
 	"io"
+	"math/rand"
 	"os"
 	"strings"
+	"time"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/ngaut/log"
@@ -217,4 +219,8 @@ func dumpToByteRows(rows *sql.Rows) (*byteRows, error) {
 	}
 
 	return &byteRows{cols: cols, data: data}, nil
+}
+
+func init() {
+	rand.Seed(time.Now().UnixNano())
 }
