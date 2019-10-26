@@ -5,8 +5,29 @@ type Expr interface {
 	Children() []Expr
 }
 
-type baseExpr struct {
+type Func struct {
+	Name     string
 	children []Expr
+}
+
+type Constant string
+
+func (c Constant) Children() []Expr {
+	return nil
+}
+
+func (c Constant) ToSQL() string {
+	return string(c)
+}
+
+type Column string
+
+func (c Column) Children() []Expr {
+	return nil
+}
+
+func (c Column) ToSQL() string {
+	return string(c)
 }
 
 type Node interface {
@@ -45,7 +66,7 @@ type Table struct {
 
 type TableSchema interface {
 	Name() string
-	Columns() []string
+	Columns() []Column
 }
 
 type TableSchemas []TableSchema
