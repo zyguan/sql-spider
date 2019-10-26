@@ -34,7 +34,14 @@ func fillNode(node util.Node, ts util.TableSchemas) {
 		fillFilter(x)
 	case *util.Agg:
 		fillAgg(x)
+	case *util.OrderBy:
+		fillOrderBy(x, ts)
 	}
+}
+
+func fillOrderBy(o *util.OrderBy, ts util.TableSchemas) {
+	nCols := o.Children()[0].Columns()
+	o.OrderByExprs = nCols[:1]
 }
 
 func fillTable(t *util.Table, ts util.TableSchemas) {
