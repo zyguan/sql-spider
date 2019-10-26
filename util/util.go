@@ -205,7 +205,6 @@ func (c Column) RetType() Type {
 
 type Node interface {
 	Columns() []Expr
-	ToSQL() string
 	ToBeautySQL(level int) string
 	ToString() string
 	Children() []Node
@@ -272,9 +271,6 @@ func (f *Filter) Columns() []Expr {
 	return f.children[0].Columns()
 }
 
-func (f *Filter) ToSQL() string {
-	return f.children[0].ToSQL() + " WHERE " + f.Where.ToSQL()
-}
 func (f *Filter) ToBeautySQL(level int) string {
 	if _, ok := f.children[0].(*Join); ok {
 		return f.children[0].ToBeautySQL(level) + " AND " + f.Where.ToSQL()
@@ -309,14 +305,6 @@ func (p *Projector) Columns() []Expr {
 	return cols
 }
 
-func (p *Projector) ToSQL() string {
-	cols := make([]string, len(p.Projections))
-	for i, e := range p.Projections {
-		cols[i] = e.ToSQL() + " AS c" + strconv.Itoa(i)
-	}
-	return "SELECT " + strings.Join(cols, ", ") + " FROM (" + p.children[0].ToSQL() + ")"
-}
-
 func (p *Projector) ToBeautySQL(level int) string {
 	cols := make([]string, len(p.Projections))
 	for i, e := range p.Projections {
@@ -349,15 +337,6 @@ type OrderBy struct {
 
 func (o *OrderBy) Columns() []Expr {
 	return o.children[0].Columns()
-}
-
-func (o *OrderBy) ToSQL() string {
-	orderBy := make([]string, 0, len(o.OrderByExprs))
-	for _, e := range o.OrderByExprs {
-		orderBy = append(orderBy, e.ToSQL())
-	}
-	return o.children[0].ToSQL() + " ORDER BY " + strings.Join(orderBy, ", ")
-	//return "SELECT * FROM (" + o.children[0].ToSQL() + ") ORDER BY " + strings.Join(orderBy, ", ")
 }
 
 func (o *OrderBy) ToBeautySQL(level int) string {
@@ -397,11 +376,6 @@ func (l *Limit) Columns() []Expr {
 	return l.children[0].Columns()
 }
 
-func (l *Limit) ToSQL() string {
-	//	return "SELECT * FROM (" + l.children[0].ToSQL() + ") LIMIT " + strconv.Itoa(l.Limit)
-	return l.children[0].ToSQL() + " LIMIT " + strconv.Itoa(l.Limit)
-}
-
 func (l *Limit) ToBeautySQL(level int) string {
 	return l.children[0].ToBeautySQL(level) + " LIMIT " + strconv.Itoa(l.Limit)
 }
@@ -428,24 +402,6 @@ func (a *Agg) Columns() []Expr {
 	ret = append(ret, a.GroupByExprs...)
 	ret = append(ret, a.AggExprs...)
 	return ret
-}
-
-func (a *Agg) ToSQL() string {
-	ret := a.Columns()
-	aggs := make([]string, 0, len(ret))
-	for _, e := range ret {
-		aggs = append(aggs, e.ToSQL())
-	}
-	groupBy := make([]string, 0, len(a.GroupByExprs))
-	for _, e := range a.GroupByExprs {
-		groupBy = append(groupBy, e.ToSQL())
-	}
-	groupBySQL := "GROUP BY " + strings.Join(groupBy, ", ")
-	if len(groupBy) == 0 {
-		groupBySQL = ""
-	}
-
-	return "SELECT " + strings.Join(aggs, ", ") + " FROM (" + a.children[0].ToSQL() + ") " + groupBySQL
 }
 
 func (a *Agg) ToBeautySQL(level int) string {
@@ -499,19 +455,6 @@ func (j *Join) Columns() []Expr {
 	return exprs
 }
 
-func (j *Join) ToSQL() string {
-	l, r := j.children[0], j.children[1]
-	lLen, rLen := len(l.Columns()), len(r.Columns())
-	cols := make([]string, lLen+rLen)
-	for i := 0; i < lLen; i++ {
-		cols[i] = "t1.c" + strconv.Itoa(i) + " AS " + "c" + strconv.Itoa(i)
-	}
-	for i := 0; i < rLen; i++ {
-		cols[i+lLen] = "t2.c" + strconv.Itoa(i) + " AS " + "c" + strconv.Itoa(i+lLen)
-	}
-	return "SELECT " + strings.Join(cols, ", ") + " FROM (" + l.ToSQL() + ") AS t1, (" + r.ToSQL() + ") AS t2 WHERE " + j.JoinCond.ToSQL()
-}
-
 func (j *Join) ToBeautySQL(level int) string {
 	l, r := j.children[0], j.children[1]
 	lLen, rLen := len(l.Columns()), len(r.Columns())
@@ -553,14 +496,6 @@ func (t *Table) Columns() []Expr {
 		cols[i] = NewColumn("c"+strconv.Itoa(i), t.Schema.Columns[idx].RetType())
 	}
 	return cols
-}
-
-func (t *Table) ToSQL() string {
-	cols := make([]string, len(t.SelectedColumns))
-	for i, idx := range t.SelectedColumns {
-		cols[i] = t.Schema.Columns[idx].col + " AS c" + strconv.Itoa(i)
-	}
-	return "SELECT " + strings.Join(cols, ", ") + " FROM " + t.Schema.Name
 }
 
 func (t *Table) ToBeautySQL(level int) string {
