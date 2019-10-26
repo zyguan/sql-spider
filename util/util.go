@@ -283,6 +283,30 @@ func (o *OrderBy) ToString() string {
 	return "Order(" + o.children[0].ToString() + ")"
 }
 
+type Limit struct {
+	baseNode
+	Limit int
+}
+
+func (l *Limit) Columns() []Expr {
+	return l.children[0].Columns()
+}
+
+func (l *Limit) ToSQL() string {
+	return "SELECT * FROM (" + l.children[0].ToSQL() + ") LIMIT " + strconv.Itoa(l.Limit)
+}
+
+func (l *Limit) Clone() Node {
+	return &Limit{
+		baseNode: *l.baseNode.clone(),
+		Limit:    0,
+	}
+}
+
+func (l *Limit) ToString() string {
+	return "Limit(" + l.children[0].ToString() + ")"
+}
+
 type Agg struct {
 	baseNode
 	AggExprs     []Expr
