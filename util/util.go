@@ -61,11 +61,7 @@ type Expr interface {
 	RetType() Type
 }
 
-type TransformRule interface {
-	OneStep(Expr) []Expr
-}
 
-var rules []TransformRule
 
 type Func struct {
 	Name     string
