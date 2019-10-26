@@ -22,15 +22,15 @@ func GenExprTrees(tree util.Tree, ts util.TableSchemas, n int) []util.Tree {
 	trees := make([]util.Tree, 0, n)
 	for i := 0; i < n; i++ {
 		t := tree.Clone()
-		fillNode(t, ts)
+		fillNode(t, ts, true)
 		trees = append(trees, t)
 	}
 	return trees
 }
 
-func fillNode(node util.Node, ts util.TableSchemas) {
+func fillNode(node util.Node, ts util.TableSchemas, isRoot bool) {
 	for _, child := range node.Children() {
-		fillNode(child, ts)
+		fillNode(child, ts, false)
 	}
 	switch x := node.(type) {
 	case *util.Table:
@@ -44,15 +44,17 @@ func fillNode(node util.Node, ts util.TableSchemas) {
 	case *util.Agg:
 		fillAgg(x)
 	case *util.OrderBy:
-		fillOrderBy(x, ts)
+		fillOrderBy(x, ts, isRoot)
 	case *util.Limit:
 		fillLimit(x)
 	}
 }
 
-func fillOrderBy(o *util.OrderBy, ts util.TableSchemas) {
+func fillOrderBy(o *util.OrderBy, ts util.TableSchemas, isRoot bool) {
 	for i, col := range o.Children()[0].Columns() {
-		o.OrderByExprs = append(o.OrderByExprs, util.NewColumn("c"+strconv.Itoa(i), col.RetType()))
+		if isRoot || rand.Float64() < 0.5 {
+			o.OrderByExprs = append(o.OrderByExprs, util.NewColumn("c"+strconv.Itoa(i), col.RetType()))
+		}
 	}
 	if len(o.OrderByExprs) == 0 {
 		cols := o.Children()[0].Columns()
