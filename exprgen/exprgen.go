@@ -198,7 +198,7 @@ func genConstant(tp util.TypeMask) util.Constant {
 
 func genDateTimeLiteral() string {
 	t := time.Unix(rand.Int63n(2000000000), rand.Int63n(30000000000))
-	return t.Format("2006-01-02 15:04:05")
+	return t.Format("'2006-01-02 15:04:05'")
 }
 
 func genIntLiteral() string {
