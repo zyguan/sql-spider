@@ -2,11 +2,8 @@ package exprgen
 
 import (
 	"fmt"
-	"math"
 	"math/rand"
 	"strconv"
-	"time"
-
 	"github.com/zyguan/sqlgen/util"
 )
 
@@ -163,7 +160,7 @@ func buildExpr(cols []util.Expr, tp util.TypeMask, validate util.ValidateExprFn)
 				}
 				return expr
 			case util.Const:
-				expr := GenConstant(tp)
+				expr := util.GenConstant(tp)
 				if !validate(expr) {
 					continue
 				}
@@ -202,59 +199,3 @@ func buildExpr(cols []util.Expr, tp util.TypeMask, validate util.ValidateExprFn)
 	return gen(0, tp, validate)
 }
 
-func GenConstant(tp util.TypeMask) util.Constant {
-	if rand.Intn(100) <= 1 {
-		return util.NewConstant("NULL", tp.Any())
-	}
-
-	var ct util.Type
-	var cv string
-	tps := tp.All()
-	t := rand.Intn(len(tps))
-	ct = tps[t]
-	switch ct {
-	case util.ETInt:
-		cv = genIntLiteral()
-	case util.ETReal, util.ETDecimal:
-		cv = genRealLiteral()
-	case util.ETString:
-		cv = genStringLiteral()
-	case util.ETDatetime:
-		cv = genDateTimeLiteral()
-	default:
-		ct = tp.Any()
-		cv = "NULL"
-	}
-	return util.NewConstant(cv, ct)
-}
-
-func genDateTimeLiteral() string {
-	t := time.Unix(rand.Int63n(2000000000), rand.Int63n(30000000000))
-	return t.Format("'2006-01-02 15:04:05'")
-}
-
-func genIntLiteral() string {
-	return fmt.Sprintf("%v", int64(float64(math.MaxInt64)*rand.Float64()))
-}
-
-func genRealLiteral() string {
-	//return fmt.Sprintf("%.6f", rand.Float64())
-	base := math.Pow(10, float64(10-rand.Intn(20)))
-	return fmt.Sprintf("%.3f", base*(rand.Float64()-0.5))
-}
-
-func genStringLiteral() string {
-	n := rand.Intn(10) + 1
-	buf := make([]byte, 0, n)
-	for i := 0; i < n; i++ {
-		x := rand.Intn(62)
-		if x < 26 {
-			buf = append(buf, byte('a'+x))
-		} else if x < 52 {
-			buf = append(buf, byte('A'+x-26))
-		} else {
-			buf = append(buf, byte('0'+x-52))
-		}
-	}
-	return "'" + string(buf) + "'"
-}

@@ -38,7 +38,8 @@ func (bh *BFSHelper) transform(root, node Node, path []int) {
 	switch t := node.(type) {
 	case *Filter:
 		for _, r := range rules {
-			exprs := r.OneStep(t.Where, nil)
+			ctx := TransformContext{}
+			exprs := r.OneStep(t.Where, ctx)
 			for _, where := range exprs {
 				tree := root.Clone()
 				p := tree
@@ -63,7 +64,8 @@ func (bh *BFSHelper) transform(root, node Node, path []int) {
 	case *Projector:
 		for _, r := range rules {
 			for i, expr := range t.Projections {
-				exprs := r.OneStep(expr, nil)
+				ctx := TransformContext{}
+				exprs := r.OneStep(expr, ctx)
 				for _, proj := range exprs {
 					tree := root.Clone()
 					p := tree
