@@ -347,7 +347,8 @@ func (o *OrderBy) ToSQL() string {
 	for _, e := range o.OrderByExprs {
 		orderBy = append(orderBy, e.ToSQL())
 	}
-	return "SELECT * FROM (" + o.children[0].ToSQL() + ") ORDER BY " + strings.Join(orderBy, ", ")
+	return o.children[0].ToSQL() + " ORDER BY " + strings.Join(orderBy, ", ")
+	//return "SELECT * FROM (" + o.children[0].ToSQL() + ") ORDER BY " + strings.Join(orderBy, ", ")
 }
 
 func (o *OrderBy) ToBeautySQL(level int) string {
@@ -355,9 +356,10 @@ func (o *OrderBy) ToBeautySQL(level int) string {
 	for _, e := range o.OrderByExprs {
 		orderBy = append(orderBy, e.ToSQL())
 	}
-	return strings.Repeat(" ", level) + "SELECT * FROM (\n" +
-		o.children[0].ToBeautySQL(level+1) + "\n" +
-		strings.Repeat(" ", level) + ") ORDER BY " + strings.Join(orderBy, ", ")
+	return o.children[0].ToBeautySQL(level) + " ORDER BY " + strings.Join(orderBy, ", ")
+	//return strings.Repeat(" ", level) + "SELECT * FROM (\n" +
+	//	o.children[0].ToBeautySQL(level+1) + "\n" +
+	//	strings.Repeat(" ", level) + ") ORDER BY " + strings.Join(orderBy, ", ")
 }
 
 func (o *OrderBy) Clone() Node {
@@ -389,13 +391,15 @@ func (l *Limit) Columns() []Expr {
 }
 
 func (l *Limit) ToSQL() string {
-	return "SELECT * FROM (" + l.children[0].ToSQL() + ") LIMIT " + strconv.Itoa(l.Limit)
+//	return "SELECT * FROM (" + l.children[0].ToSQL() + ") LIMIT " + strconv.Itoa(l.Limit)
+	return l.children[0].ToSQL() + " LIMIT " + strconv.Itoa(l.Limit)
 }
 
 func (l *Limit) ToBeautySQL(level int) string {
-	return strings.Repeat(" ", level) + "SELECT * FROM (\n" +
-		l.children[0].ToBeautySQL(level+1) + "\n" +
-		strings.Repeat(" ", level) + ") LIMIT " + strconv.Itoa(l.Limit)
+	return l.children[0].ToBeautySQL(level) + " LIMIT " + strconv.Itoa(l.Limit)
+//	return strings.Repeat(" ", level) + "SELECT * FROM (\n" +
+//		l.children[0].ToBeautySQL(level + 1) + "\n" +
+//		strings.Repeat(" ", level) + ") LIMIT " + strconv.Itoa(l.Limit)
 }
 
 func (l *Limit) Clone() Node {

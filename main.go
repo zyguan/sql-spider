@@ -45,6 +45,7 @@ func safePrint(t util.Tree) {
 	}()
 	//fmt.Println(t.ToSQL())
 	fmt.Println(t.ToBeautySQL(0))
+	fmt.Println()
 }
 
 func init() {
