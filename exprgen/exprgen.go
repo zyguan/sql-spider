@@ -200,8 +200,14 @@ func genStringLiteral() string {
 	n := rand.Intn(10) + 1
 	buf := make([]byte, 0, n)
 	for i := 0; i < n; i++ {
-		x := rand.Intn(26)
-		buf = append(buf, byte('a'+x))
+		x := rand.Intn(62)
+		if x < 26 {
+			buf = append(buf, byte('a'+x))
+		} else if x < 52 {
+			buf = append(buf, byte('A'+x-26))
+		} else {
+			buf = append(buf, byte('0'+x-52))
+		}
 	}
 	return "'" + string(buf) + "'"
 }
