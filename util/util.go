@@ -235,10 +235,11 @@ func (p *Projector) ToString() string {
 type Agg struct {
 	baseNode
 	AggExprs []Expr
+	GroupByExprs []Expr
 }
 
 func (a *Agg) NumCols() int {
-	return len(a.AggExprs)
+	return len(a.AggExprs) + len(a.GroupByExprs)
 }
 
 func (a *Agg) ToSQL() string {
