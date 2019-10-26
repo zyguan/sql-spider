@@ -99,7 +99,7 @@ func (f *Func) ToSQL() string {
 	case FuncLogicAnd:
 		return infixFn("AND")
 	case FuncLogicXor:
-		return infixFn("XOR")
+		return infixFn("^")
 	case FuncPlus:
 		return infixFn("+")
 	case FuncMinus:
