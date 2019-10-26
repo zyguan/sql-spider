@@ -147,15 +147,16 @@ func buildExpr(cols []util.Expr, tp util.TypeMask) util.Expr {
 			case util.Const:
 				return genConstant(tp)
 			default:
-				argsSpec := util.FuncInfos[f]
-				n := argsSpec.MinArgs
-				if argsSpec.MaxArgs > argsSpec.MinArgs {
-					n = rand.Intn(argsSpec.MaxArgs-argsSpec.MinArgs) + argsSpec.MinArgs
+				fnSpec := util.FuncInfos[f]
+				n := fnSpec.MinArgs
+				if fnSpec.MaxArgs > fnSpec.MinArgs {
+					n = rand.Intn(fnSpec.MaxArgs-fnSpec.MinArgs) + fnSpec.MinArgs
 				}
 				expr := &util.Func{Name: f}
+				expr.SetRetType(fnSpec.ReturnType)
 				ok := true
 				for i := 0; i < n; i++ {
-					subExpr := gen(lv+1, argsSpec.ArgTypeMask(i))
+					subExpr := gen(lv+1, fnSpec.ArgTypeMask(i, expr.Children()))
 					if subExpr == nil {
 						ok = false
 						break

@@ -15,11 +15,12 @@ func (tm TypeMask) Contain(t Type) bool {
 }
 
 func (tm TypeMask) Any() Type {
-	for i := uint(0); i < 10; i++ {
-		if tm&TypeMask(i) > 0 {
+	for i := uint(0); i < 15; i++ {
+		if tm.Contain(Type(1 << i)) {
 			return 1 << i
 		}
 	}
+	fmt.Println(">>", tm)
 	panic("??")
 }
 
@@ -108,6 +109,10 @@ func (f *Func) ToSQL() string {
 
 func (f *Func) AppendArg(expr Expr) {
 	f.children = append(f.children, expr)
+}
+
+func (f *Func) SetRetType(tm TypeMask) {
+	f.retType = Type(tm)
 }
 
 func (f *Func) Clone() Expr {

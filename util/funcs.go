@@ -128,9 +128,11 @@ func GenExprFromProbTable(level int) string {
 }
 
 type FuncInfo struct {
-	MinArgs   int
-	MaxArgs   int
-	ArgsTypes []TypeMask
+	Name       string
+	MinArgs    int
+	MaxArgs    int
+	ArgsTypes  []TypeMask
+	ReturnType TypeMask
 }
 
 const (
@@ -139,7 +141,19 @@ const (
 	TypeTime    = TypeMask(ETDatetime | ETTimestamp | ETDuration)
 )
 
-func (fi FuncInfo) ArgTypeMask(i int) TypeMask {
+func (fi FuncInfo) ArgTypeMask(i int, prvArgs []Expr) TypeMask {
+	switch fi.Name {
+	case FuncEQ, FuncGE, FuncLE, FuncNE, FuncLT, FuncGT:
+		if i == 0 || len(prvArgs) == 0 {
+			return TypeDefault
+		} else if TypeNumber.Contain(prvArgs[len(prvArgs)-1].RetType()) {
+			return TypeNumber
+		} else if TypeTime.Contain(prvArgs[len(prvArgs)-1].RetType()) {
+			return TypeTime
+		} else {
+			return TypeMask(prvArgs[len(prvArgs)-1].RetType())
+		}
+	}
 	if len(fi.ArgsTypes) <= i {
 		return TypeDefault
 	}
@@ -147,18 +161,18 @@ func (fi FuncInfo) ArgTypeMask(i int) TypeMask {
 }
 
 var FuncInfos = map[string]FuncInfo{
-	FuncEQ:     {2, 2, nil},
-	FuncGE:     {2, 2, nil},
-	FuncLE:     {2, 2, nil},
-	FuncNE:     {2, 2, nil},
-	FuncLT:     {2, 2, nil},
-	FuncGT:     {2, 2, nil},
-	FuncIsTrue: {1, 1, nil},
-	FuncIf:     {3, 3, nil},
-	FuncIfnull: {2, 2, nil},
+	FuncEQ:     {FuncEQ, 2, 2, nil, TypeNumber},
+	FuncGE:     {FuncGE, 2, 2, nil, TypeNumber},
+	FuncLE:     {FuncLE, 2, 2, nil, TypeNumber},
+	FuncNE:     {FuncNE, 2, 2, nil, TypeNumber},
+	FuncLT:     {FuncLT, 2, 2, nil, TypeNumber},
+	FuncGT:     {FuncGT, 2, 2, nil, TypeNumber},
+	FuncIsTrue: {FuncIsTrue, 1, 1, nil, TypeDefault},
+	FuncIf:     {FuncIf, 3, 3, nil, TypeDefault},
+	FuncIfnull: {FuncIfnull, 2, 2, nil, TypeDefault},
 
-	FuncPow:   {2, 2, []TypeMask{TypeNumber, TypeNumber}},
-	FuncLower: {1, 1, []TypeMask{TypeMask(ETString)}},
+	FuncPow:   {FuncPow, 2, 2, []TypeMask{TypeNumber, TypeNumber}, TypeNumber},
+	FuncLower: {FuncLower, 1, 1, []TypeMask{TypeMask(ETString)}, TypeMask(ETString)},
 }
 
 //var NumArgs = map[string][]int{
