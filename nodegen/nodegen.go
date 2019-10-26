@@ -14,38 +14,49 @@ type NodeGenerator interface {
 type RandomNodeGenerator struct {
 }
 
-func randomGenNode() util.Node {
-	p := rand.Int31n(100)
-	if p > 0 && p < 50 {
-		return &util.Table{}
+func randomGenNode(level int) util.Node {
+	p := rand.Float64()
+	propTable := []struct {
+		Node util.Node
+		Prop float64
+	}{
+		{&util.Join{}, 0.3 - 0.1 * float64(level)},
+		{&util.Agg{}, 0.3 - 0.1 * float64(level)},
+		{&util.Projector{}, 0.2 - 0.1 * float64(level)},
+		{&util.Filter{}, 0.2 + 0.15 * float64(level)},
+		{&util.Table{}, 0.1 + 0.15 * float64(level)},
 	}
-	if p >= 50 && p < 70 {
-		return &util.Filter{}
+	for _, prop := range propTable {
+		p -= prop.Prop
+		if p <= 0 {
+			return prop.Node
+		}
 	}
-	if p >= 70 && p < 90 {
-		return &util.Projector{}
-	}
-	return &util.Join{}
+	return nil
 }
 
 func (rn *RandomNodeGenerator) Generate(level int) util.Node {
 	// random pick node type
-	node := randomGenNode()
+	node := randomGenNode(level)
 	switch node.(type) {
 	case *util.Table:
 		break
 	case *util.Filter:
 		filter := node.(*util.Filter)
-		filter.AddChild(rn.Generate(level))
+		filter.AddChild(rn.Generate(level + 1))
 		break
 	case *util.Projector:
 		proj := node.(*util.Projector)
-		proj.AddChild(rn.Generate(level))
+		proj.AddChild(rn.Generate(level + 1))
+		break
+	case *util.Agg:
+		agg := node.(*util.Agg)
+		agg.AddChild(rn.Generate(level + 1))
 		break
 	case *util.Join:
 		join := node.(*util.Join)
-		join.AddChild(rn.Generate(level))
-		join.AddChild(rn.Generate(level))
+		join.AddChild(rn.Generate(level + 1))
+		join.AddChild(rn.Generate(level + 1))
 		break
 	}
 	return node
