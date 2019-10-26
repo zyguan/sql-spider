@@ -69,6 +69,15 @@ func (f *Func) Children() []Expr {
 }
 
 func (f *Func) ToSQL() string {
+	defer func() {
+		if r := recover(); r != nil {
+			fmt.Println("============================")
+			fmt.Println("====>>>", f.Name, len(f.children))
+			fmt.Println("============================")
+			panic("??")
+		}
+	}()
+
 	infixFn := func(op string) string {
 		return fmt.Sprintf("(%s %s %s)", f.children[0].ToSQL(), op, f.children[1].ToSQL())
 	}
@@ -262,7 +271,7 @@ func (f *Filter) ToSQL() string {
 }
 func (f *Filter) ToBeautySQL(level int) string {
 	return strings.Repeat(" ", level) + "SELECT * FROM (\n" +
-		f.children[0].ToBeautySQL(level + 1) + "\n" +
+		f.children[0].ToBeautySQL(level+1) + "\n" +
 		strings.Repeat(" ", level) + ") WHERE " + f.Where.ToSQL()
 }
 
@@ -305,7 +314,7 @@ func (p *Projector) ToBeautySQL(level int) string {
 		cols[i] = e.ToSQL() + " AS c" + strconv.Itoa(i)
 	}
 	return strings.Repeat(" ", level) + "SELECT " + strings.Join(cols, ", ") + " FROM (\n" +
-		p.children[0].ToBeautySQL(level + 1) + "\n" +
+		p.children[0].ToBeautySQL(level+1) + "\n" +
 		strings.Repeat(" ", level) + ")"
 }
 
@@ -385,7 +394,7 @@ func (l *Limit) ToSQL() string {
 
 func (l *Limit) ToBeautySQL(level int) string {
 	return strings.Repeat(" ", level) + "SELECT * FROM (\n" +
-		l.children[0].ToBeautySQL(level + 1) + "\n" +
+		l.children[0].ToBeautySQL(level+1) + "\n" +
 		strings.Repeat(" ", level) + ") LIMIT " + strconv.Itoa(l.Limit)
 }
 
@@ -423,8 +432,12 @@ func (a *Agg) ToSQL() string {
 	for _, e := range a.GroupByExprs {
 		groupBy = append(groupBy, e.ToSQL())
 	}
+	groupBySQL := "GROUP BY " + strings.Join(groupBy, ", ")
+	if len(groupBy) == 0 {
+		groupBySQL = ""
+	}
 
-	return "SELECT " + strings.Join(aggs, ", ") + " FROM (" + a.children[0].ToSQL() + ") GROUP BY " + strings.Join(groupBy, ", ")
+	return "SELECT " + strings.Join(aggs, ", ") + " FROM (" + a.children[0].ToSQL() + ") " + groupBySQL
 }
 
 func (a *Agg) ToBeautySQL(level int) string {
@@ -438,7 +451,7 @@ func (a *Agg) ToBeautySQL(level int) string {
 		groupBy = append(groupBy, e.ToSQL())
 	}
 	return strings.Repeat(" ", level) + "SELECT " + strings.Join(aggs, ", ") + " FROM (\n" +
-		a.children[0].ToBeautySQL(level + 1) + "\n" +
+		a.children[0].ToBeautySQL(level+1) + "\n" +
 		strings.Repeat(" ", level) + ") GROUP BY " + strings.Join(groupBy, ", ")
 }
 
@@ -493,8 +506,8 @@ func (j *Join) ToBeautySQL(level int) string {
 		cols[i+lLen] = "t2.c" + strconv.Itoa(i) + " AS " + "c" + strconv.Itoa(i+lLen)
 	}
 	return strings.Repeat(" ", level) + "SELECT " + strings.Join(cols, ",") + " FROM (\n" +
-		l.ToBeautySQL(level + 1) + ") AS t1,\n" +
-		r.ToBeautySQL(level + 1) + ") AS t2\n" +
+		l.ToBeautySQL(level+1) + ") AS t1,\n" +
+		r.ToBeautySQL(level+1) + ") AS t2\n" +
 		strings.Repeat(" ", level) + " ON " + j.JoinCond.ToSQL()
 }
 

@@ -93,10 +93,10 @@ func fillAgg(a *util.Agg) {
 	if aggCols == 0 {
 		aggCols = 1
 	}
-	for i := 0; i < aggCols; i++ {
+	for i := 0; i < nCols-aggCols; i++ {
 		a.GroupByExprs = append(a.GroupByExprs, cols[i])
 	}
-	for i := aggCols; i < nCols; i++ {
+	for i := nCols - aggCols; i < nCols; i++ {
 		col := cols[i]
 		expr := &util.Func{Name: util.GetAggExprFromPropTable()}
 		expr.AppendArg(col)
