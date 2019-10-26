@@ -134,8 +134,8 @@ type FuncInfo struct {
 }
 
 const (
-	TypeDefault TypeMask = TypeMask(ETInt | ETReal | ETDecimal | ETString | ETDatetime | ETTimestamp | ETTimestamp | ETJson)
-	TypeNumber  TypeMask = TypeMask(ETInt | ETReal | ETDecimal)
+	TypeDefault = TypeMask(ETInt | ETReal | ETDecimal | ETString | ETDatetime | ETTimestamp | ETTimestamp | ETJson)
+	TypeNumber  = TypeMask(ETInt | ETReal | ETDecimal)
 )
 
 func (fi FuncInfo) ArgTypeMask(i int) TypeMask {
@@ -261,7 +261,7 @@ var FuncInfos = map[string]FuncInfo{
 var funcList []string
 
 func init() {
-	for f := range funcInfos {
+	for f := range FuncInfos {
 		funcList = append(funcList, f)
 	}
 }
