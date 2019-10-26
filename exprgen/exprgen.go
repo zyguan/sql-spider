@@ -34,7 +34,14 @@ func fillNode(node util.Node, ts util.TableSchemas) {
 		fillFilter(x)
 	case *util.Agg:
 		fillAgg(x)
+	case *util.OrderBy:
+		fillOrderBy(x, ts)
 	}
+}
+
+func fillOrderBy(o *util.OrderBy, ts util.TableSchemas) {
+	nCols := o.Children()[0].Columns()
+	o.OrderByExprs = nCols[:1]
 }
 
 func fillTable(t *util.Table, ts util.TableSchemas) {
@@ -61,22 +68,24 @@ func fillProj(p *util.Projector) {
 		p.Projections[i] = buildExpr(cols, util.TypeDefault)
 	}
 }
+
 func fillAgg(a *util.Agg) {
+	cols := a.Children()[0].Columns()
 	chCols := len(a.Children()[0].Columns())
 	aggCols := rand.Intn(chCols)
 	if aggCols == 0 {
 		aggCols = 1
 	}
-	groupbyCols := chCols - aggCols
-	children := a.Children()[0].Children()
-	allExprs := make([]util.Expr, chCols)
-	for i := 0; i < chCols; i++ {
-		allExprs[i] = buildExpr(children[i].Columns(), util.TypeDefault)
+	for i := 0; i < aggCols-1; i ++ {
+		colName := fmt.Sprint("c%d", i)
+		a.GroupByExprs = append(a.GroupByExprs, util.NewColumn(colName, cols[i].RetType()))
 	}
-	if groupbyCols > 0 {
-		a.GroupByExprs = allExprs[0:groupbyCols]
+	for i := aggCols; i < chCols; i ++ {
+		colName := fmt.Sprint("c%d", i)
+		expr := &util.Func{Name: util.GetAggExprFromPropTable()}
+		expr.AppendArg(util.NewColumn(colName, cols[i].RetType()))
+		a.AggExprs = append(a.AggExprs, expr)
 	}
-	a.AggExprs = allExprs[groupbyCols:chCols]
 }
 
 func fillJoin(j *util.Join) {

@@ -305,17 +305,31 @@ type Agg struct {
 }
 
 func (a *Agg) Columns() []Expr {
-	return a.AggExprs
+	ret := make([]Expr, 0, len(a.AggExprs)+len(a.GroupByExprs))
+	ret = append(ret, a.GroupByExprs...)
+	ret = append(ret, a.AggExprs...)
+	return ret
 }
 
 func (a *Agg) ToSQL() string {
-	//TBD
-	return ""
+	ret := a.Columns()
+	aggs := make([]string, 0, len(ret))
+	for _, e := range ret {
+		aggs = append(aggs, e.ToSQL())
+	}
+	groupBy := make([]string, 0, len(a.GroupByExprs))
+	for _, e := range a.GroupByExprs {
+		groupBy = append(groupBy, e.ToSQL())
+	}
+
+	return "select " + strings.Join(aggs, ", ") + " from ( " + a.children[0].ToSQL() + ") group by " + strings.Join(groupBy, ", ")
 }
 
 func (a *Agg) Clone() Node {
-	//TBD
-	return nil
+	return &Agg{
+		*a.baseNode.clone(),
+		nil, nil,
+	}
 }
 
 func (a *Agg) ToString() string {

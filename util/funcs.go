@@ -127,6 +127,8 @@ func GenExprFromProbTable(level int) string {
 	return funcList[rand.Intn(len(funcList))]
 }
 
+
+
 type FuncInfo struct {
 	MinArgs   int
 	MaxArgs   int
@@ -134,12 +136,13 @@ type FuncInfo struct {
 }
 
 const (
-	TypeDefault TypeMask = TypeMask(ETInt | ETReal | ETDecimal | ETString | ETDatetime | ETTimestamp | ETTimestamp | ETJson)
-	TypeNumber  TypeMask = TypeMask(ETInt | ETReal | ETDecimal)
+	TypeDefault = TypeMask(ETInt | ETReal | ETDecimal | ETString | ETDatetime | ETTimestamp | ETDuration | ETJson)
+	TypeNumber  = TypeMask(ETInt | ETReal | ETDecimal)
+	TypeTime    = TypeMask(ETDatetime | ETTimestamp | ETDuration)
 )
 
 func (fi FuncInfo) ArgTypeMask(i int) TypeMask {
-	if len(fi.ArgsTypes) < i {
+	if len(fi.ArgsTypes) <= i {
 		return TypeDefault
 	}
 	return fi.ArgsTypes[i]
@@ -261,7 +264,7 @@ var FuncInfos = map[string]FuncInfo{
 var funcList []string
 
 func init() {
-	for f := range funcInfos {
+	for f := range FuncInfos {
 		funcList = append(funcList, f)
 	}
 }
