@@ -61,21 +61,20 @@ func fillProj(p *util.Projector) {
 }
 func fillAgg(a *util.Agg)  {
 	chCols := a.Children()[0].NumCols()
-	groupbyCols := rand.Intn(chCols)
-	if groupbyCols == 0 {
-		groupbyCols = 1
-	}
-	aggCols := chCols - groupbyCols
+	aggCols := rand.Intn(chCols)
 	if aggCols == 0 {
 		aggCols = 1
 	}
+	groupbyCols := chCols - aggCols
 	children := a.Children()[0].Children()
 	allExprs := make([]util.Expr, chCols)
 	for i := 0;i < chCols;i ++ {
 		allExprs[i] = buildExpr(children[i].NumCols(), util.TypeDefault)
 	}
-	a.GroupByExprs = allExprs[0: groupbyCols]
-	a.AggExprs = allExprs[aggCols - 1: chCols]
+	if groupbyCols > 0 {
+		a.GroupByExprs = allExprs[0: groupbyCols]
+	}
+	a.AggExprs = allExprs[groupbyCols: chCols]
 }
 
 func fillJoin(j *util.Join) {
