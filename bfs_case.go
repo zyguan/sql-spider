@@ -4,8 +4,6 @@ import (
 	"github.com/zyguan/sqlgen/util"
 )
 
-var bfsCases []util.Tree
-
 func genCase1() util.Tree {
 	/*
 	SELECT * FROM ( SELECT CEIL(TAN(IF(c1, c1, c1))) AS c0 FROM (
@@ -29,6 +27,5 @@ func genCase1() util.Tree {
 	col0 := util.NewColumn("c0", util.ETReal)
 	o := util.NewOrderBy([]util.Expr{col0})
 	o.AddChild(p)
-
 	return o
 }
