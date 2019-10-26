@@ -126,7 +126,7 @@ func buildExpr(cols []util.Expr, tp util.TypeMask) util.Expr {
 		count := 10000
 		for count > 0 {
 			count--
-			switch f := util.GenExprFromProbTable(lv); f {
+			switch f := util.GenExprFromProbTable(tp, lv); f {
 			case util.Col:
 				cc := make([]util.Expr, 0, len(cols))
 				for _, col := range cols {

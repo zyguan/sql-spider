@@ -115,7 +115,7 @@ const (
 	Const = "Constant"
 )
 
-func GenExprFromProbTable(level int) string {
+func GenExprFromProbTable(tp TypeMask, level int) string {
 	// Col: 0.1, Cons: 0.1, All Funcs: 0.8
 	r := rand.Float64()
 	r *= math.Pow(0.7, float64(level))
@@ -124,7 +124,19 @@ func GenExprFromProbTable(level int) string {
 	} else if r < 0.2 {
 		return Const
 	}
-	return funcList[rand.Intn(len(funcList))]
+
+	count := 0
+	for count < 1000 {
+		count++
+		fname := funcList[rand.Intn(len(funcList))]
+		fnSpec := FuncInfos[fname]
+		if !tp.Has(fnSpec.ReturnType) {
+			continue
+		}
+		return fname
+	}
+
+	panic("???")
 }
 
 type FuncInfo struct {

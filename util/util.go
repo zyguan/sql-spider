@@ -23,6 +23,10 @@ func (tm TypeMask) Any() Type {
 	panic(fmt.Sprintf("DEBUG %v", tm))
 }
 
+func (tm TypeMask) Has(t TypeMask) bool {
+	return tm&t > 0
+}
+
 func (tm TypeMask) All() []Type {
 	ret := make([]Type, 0, 15)
 	for i := uint(0); i < 15; i++ {
