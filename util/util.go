@@ -493,7 +493,7 @@ func (j *Join) ToSQL() string {
 	for i := 0; i < rLen; i++ {
 		cols[i+lLen] = "t2.c" + strconv.Itoa(i) + " AS " + "c" + strconv.Itoa(i+lLen)
 	}
-	return "SELECT " + strings.Join(cols, ", ") + " FROM (" + l.ToSQL() + ") AS t1, (" + r.ToSQL() + ") AS t2 ON " + j.JoinCond.ToSQL()
+	return "SELECT " + strings.Join(cols, ", ") + " FROM (" + l.ToSQL() + ") AS t1, (" + r.ToSQL() + ") AS t2 WHERE " + j.JoinCond.ToSQL()
 }
 
 func (j *Join) ToBeautySQL(level int) string {
@@ -509,7 +509,7 @@ func (j *Join) ToBeautySQL(level int) string {
 	return strings.Repeat(" ", level) + "SELECT " + strings.Join(cols, ",") + " FROM (\n" +
 		l.ToBeautySQL(level+1) + ") AS t1, (\n" +
 		r.ToBeautySQL(level+1) + ") AS t2\n" +
-		strings.Repeat(" ", level) + " ON " + j.JoinCond.ToSQL()
+		strings.Repeat(" ", level) + " WHERE " + j.JoinCond.ToSQL()
 }
 
 func (j *Join) Clone() Node {
