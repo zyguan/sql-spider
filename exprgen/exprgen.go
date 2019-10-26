@@ -100,6 +100,7 @@ func fillAgg(a *util.Agg) {
 		col := cols[i]
 		expr := &util.Func{Name: util.GetAggExprFromPropTable()}
 		expr.AppendArg(col)
+		expr.SetRetType(util.TypeMask(util.AggRetType(expr.Name, col)))
 		a.AggExprs = append(a.AggExprs, expr)
 	}
 }
@@ -121,7 +122,7 @@ func buildJoinCond(lCols []util.Expr, rCols []util.Expr) util.Expr {
 }
 
 func genJoinFunc() *util.Func {
-	allowFuncName := []string {
+	allowFuncName := []string{
 		util.FuncGE,
 		util.FuncLE,
 		util.FuncEQ,

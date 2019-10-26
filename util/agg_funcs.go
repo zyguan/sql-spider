@@ -3,11 +3,11 @@ package util
 import "math/rand"
 
 const (
-	FuncAvg = "Avg"
-	FuncSum = "Sum"
+	FuncAvg   = "Avg"
+	FuncSum   = "Sum"
 	FuncCount = "Count"
-	FuncMax = "Max"
-	FuncMin = "Min"
+	FuncMax   = "Max"
+	FuncMin   = "Min"
 )
 
 func GetAggExprFromPropTable() string {
@@ -25,4 +25,11 @@ func GetAggExprFromPropTable() string {
 		return FuncMax
 	}
 	return FuncMin
+}
+
+func AggRetType(fname string, col Expr) Type {
+	if fname == FuncSum {
+		return ETInt
+	}
+	return col.RetType()
 }
