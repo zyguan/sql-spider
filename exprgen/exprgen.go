@@ -1,6 +1,7 @@
 package exprgen
 
 import (
+	"fmt"
 	"math/rand"
 	"strconv"
 
@@ -11,13 +12,10 @@ func GenExprTrees(tree util.Tree, ts util.TableSchemas, n int) []util.Tree {
 	trees := make([]util.Tree, 0, n)
 	for i := 0; i < n; i++ {
 		t := tree.Clone()
-		fillTree(t)
+		fillNode(t, ts)
 		trees = append(trees, t)
 	}
 	return trees
-}
-
-func fillTree(tree util.Tree) {
 }
 
 func fillNode(node util.Node, ts util.TableSchemas) {
@@ -57,16 +55,23 @@ func fillProj(p *util.Projector) {
 	}
 }
 
-func fillJoin(j *util.Join) [][]util.Expr {
+func fillJoin(j *util.Join) {
 	nLCols, nRCols := j.Children()[0].NumCols(), j.Children()[1].NumCols()
-	// TODO
-	return nil
+	j.JoinCond = buildJoinCond(nLCols, nRCols)
 }
 
-func fillFilter(f *util.Filter) []util.Expr {
+func fillFilter(f *util.Filter) {
 	nCols := f.Children()[0].NumCols()
-	// TODO
-	return nil
+	f.Where = buildExpr(nCols)
+}
+
+func buildJoinCond(nLCols, nRCols int) util.Expr {
+	lCol := fmt.Sprintf("t1.c%v", rand.Intn(nLCols))
+	rCol := fmt.Sprintf("t2.c%v", rand.Intn(nLCols))
+	expr :=  &util.Func{Name: util.FuncEQ}
+	expr.AppendArg(util.Column(lCol))
+	expr.AppendArg(util.Column(rCol))
+	return expr
 }
 
 func buildExpr(nCols int) util.Expr {
