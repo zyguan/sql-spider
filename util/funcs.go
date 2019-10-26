@@ -130,12 +130,12 @@ func GenExprFromProbTable(level int) string {
 type FuncInfo struct {
 	MinArgs   int
 	MaxArgs   int
-	ArgsTypes []Type
+	ArgsTypes []TypeMask
 }
 
 const (
-	TypeDefault = ETInt | ETReal | ETDecimal | ETString | ETDatetime | ETTimestamp | ETTimestamp | ETJson
-	TypeNumber  = ETInt | ETReal | ETDecimal
+	TypeDefault TypeMask = TypeMask(ETInt | ETReal | ETDecimal | ETString | ETDatetime | ETTimestamp | ETTimestamp | ETJson)
+	TypeNumber  TypeMask = TypeMask(ETInt | ETReal | ETDecimal)
 )
 
 func (fi FuncInfo) ArgType(i int) Type {
@@ -148,8 +148,8 @@ func (fi FuncInfo) ArgType(i int) Type {
 var FuncInfos = map[string]FuncInfo{
 	FuncEQ:     {2, 2, nil},
 	FuncIsTrue: {1, 1, nil},
-	FuncPow:    {2, 2, []Type{TypeNumber, TypeNumber}},
-	FuncLower:  {1, 1, []Type{ETString}},
+	FuncPow:    {2, 2, []TypeMask{TypeNumber, TypeNumber}},
+	FuncLower:  {1, 1, []TypeMask{TypeMask(ETString)}},
 }
 
 //var NumArgs = map[string][]int{

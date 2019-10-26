@@ -76,9 +76,9 @@ func buildJoinCond(nLCols, nRCols int) util.Expr {
 	return expr
 }
 
-func buildExpr(nCols int, tp util.Type) util.Expr {
-	var gen func(lv int, tp util.Type) util.Expr
-	gen = func(lv int, tp util.Type) util.Expr {
+func buildExpr(nCols int, tp util.TypeMask) util.Expr {
+	var gen func(lv int, tp util.TypeMask) util.Expr
+	gen = func(lv int, tp util.TypeMask) util.Expr {
 		switch f := util.GenExprFromProbTable(lv); f {
 		case util.Col:
 			return nil // TODO
