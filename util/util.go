@@ -10,6 +10,10 @@ type Type uint
 
 type TypeMask uint
 
+func (tm TypeMask) Contain(t Type) bool {
+	return uint(tm)&uint(t) > 0
+}
+
 const (
 	ETInt Type = 1 << iota
 	ETReal
@@ -109,6 +113,10 @@ type Constant struct {
 	retType Type
 }
 
+func NewConstant(val string, retType Type) Constant {
+	return Constant{val, retType}
+}
+
 func (c Constant) Children() []Expr {
 	return nil
 }
@@ -128,6 +136,10 @@ func (c Constant) RetType() Type {
 type Column struct {
 	col     string
 	retType Type
+}
+
+func NewColumn(col string, retType Type) Column {
+	return Column{col, retType}
 }
 
 func (c Column) Children() []Expr {
