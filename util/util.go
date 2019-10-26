@@ -1,5 +1,10 @@
 package util
 
+import (
+	"strconv"
+	"strings"
+)
+
 type Expr interface {
 	ToSQL() string
 	Children() []Expr
@@ -46,7 +51,11 @@ func (b *baseNode) Children() []Node {
 
 type Filter struct {
 	baseNode
-	Where []Expr
+	Where Expr
+}
+
+func (f *Filter) ToSQL() string {
+	return "SELECT * FROM (" + f.Children()[0].ToSQL() + ") WHERE " + f.Where.ToSQL()
 }
 
 type Projector struct {
@@ -54,14 +63,42 @@ type Projector struct {
 	Projections []Expr
 }
 
+func (p *Projector) ToSQL() string {
+	cols := make([]string, len(p.Projections))
+	for i, e := range p.Projections {
+		cols[i] = e.ToSQL() + " AS c" + strconv.Itoa(i)
+	}
+	return "SELECT " + strings.Join(cols, ", ") + " FROM (" + p.Children()[0].ToSQL() + ")"
+}
+
 type Join struct {
 	baseNode
-	JoinCond []Expr
+	JoinCond Expr
+}
+
+func (j *Join) ToSQL() string {
+	l, r := j.Children()[0], j.Children()[1]
+	cols := make([]string, l.NumCols()+r.NumCols())
+	for i := 0; i < l.NumCols(); i++ {
+		cols[i] = "t1.c" + strconv.Itoa(i) + " AS " + "c" + strconv.Itoa(i)
+	}
+	for i := 0; i < r.NumCols(); i++ {
+		cols[i] = "t2.c" + strconv.Itoa(i) + " AS " + "c" + strconv.Itoa(i+l.NumCols())
+	}
+	return "SELECT " + strings.Join(cols, ", ") + " FROM (" + l.ToSQL() + ") AS t1, (" + r.ToSQL() + ") AS t2 ON " + j.JoinCond.ToSQL()
 }
 
 type Table struct {
 	baseNode
 	Columns []string
+}
+
+func (t *Table) ToSQL() string {
+	cols := make([]string, len(t.Columns))
+	for i, col := range t.Columns {
+		cols[i] = col + " AS c" + strconv.Itoa(i)
+	}
+	return "SELECT " + strings.Join(cols, ", ") + " FROM (" + t.Children()[0].ToSQL() + ")"
 }
 
 type TableSchema interface {
