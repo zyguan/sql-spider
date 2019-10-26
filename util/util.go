@@ -267,12 +267,14 @@ func (f *Filter) Columns() []Expr {
 }
 
 func (f *Filter) ToSQL() string {
-	return "SELECT * FROM (" + f.children[0].ToSQL() + ") WHERE " + f.Where.ToSQL()
+	return f.children[0].ToSQL() + " WHERE " + f.Where.ToSQL()
+	//return "SELECT * FROM (" + f.children[0].ToSQL() + ") WHERE " + f.Where.ToSQL()
 }
 func (f *Filter) ToBeautySQL(level int) string {
-	return strings.Repeat(" ", level) + "SELECT * FROM (\n" +
-		f.children[0].ToBeautySQL(level+1) + "\n" +
-		strings.Repeat(" ", level) + ") WHERE " + f.Where.ToSQL()
+	return f.children[0].ToBeautySQL(level) +  " WHERE " + f.Where.ToSQL()
+//	return strings.Repeat(" ", level) + "SELECT * FROM (\n" +
+//		f.children[0].ToBeautySQL(level+1) + "\n" +
+//		strings.Repeat(" ", level) + ") WHERE " + f.Where.ToSQL()
 }
 
 func (f *Filter) Clone() Node {
