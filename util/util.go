@@ -70,8 +70,10 @@ func (c Column) Clone() Expr {
 type Node interface {
 	NumCols() int
 	ToSQL() string
+	ToString() string
 	Children() []Node
 	Clone() Node
+	AddChild(node Node)
 }
 
 type Tree Node
@@ -92,6 +94,10 @@ func (b *baseNode) clone() *baseNode {
 	return &baseNode{xs}
 }
 
+func (b *baseNode) AddChild(node Node) {
+	b.children = append(b.children, node)
+}
+
 type Filter struct {
 	baseNode
 	Where Expr
@@ -110,6 +116,10 @@ func (f *Filter) Clone() Node {
 		*f.baseNode.clone(),
 		f.Where.Clone(),
 	}
+}
+
+func (f *Filter) ToString() string {
+	return "Filter(" + f.children[0].ToString() + ")"
 }
 
 type Projector struct {
@@ -140,6 +150,10 @@ func (p *Projector) Clone() Node {
 	}
 }
 
+func (p *Projector) ToString() string {
+	return "Projector(" + p.children[0].ToString() + ")"
+}
+
 type Join struct {
 	baseNode
 	JoinCond Expr
@@ -166,6 +180,9 @@ func (j *Join) Clone() Node {
 		*j.baseNode.clone(),
 		j.JoinCond.Clone(),
 	}
+}
+func (j *Join) ToString() string {
+	return "Join(" + j.children[0].ToString() + "," + j.children[1].ToString() + ")"
 }
 
 type Table struct {
@@ -197,6 +214,10 @@ func (t *Table) Clone() Node {
 		t1.SelectedColumns = append(t1.SelectedColumns, s)
 	}
 	return t1
+}
+
+func (t *Table) ToString() string {
+	return "Table"
 }
 
 type TableSchema interface {
