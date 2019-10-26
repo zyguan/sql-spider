@@ -1,7 +1,7 @@
 package util
 
 type TransformContext struct {
-	Cols []Column
+	Cols []Expr
 	ReplaceChildIdx int
 }
 

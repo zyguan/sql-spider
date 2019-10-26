@@ -1,6 +1,9 @@
 package util
 
-import "container/list"
+import (
+	"container/list"
+	"math/rand"
+)
 
 type BFSHelper struct {
 	states       map[string]int
@@ -39,6 +42,11 @@ func (bh *BFSHelper) transform(root, node Node, path []int) {
 	case *Filter:
 		for _, r := range rules {
 			ctx := TransformContext{}
+			for _, child := range t.Children() {
+				ctx.Cols = append(ctx.Cols, child.Columns()...)
+			}
+			ctx.ReplaceChildIdx = rand.Intn(len(t.children))
+
 			exprs := r.OneStep(t.Where, ctx)
 			for _, where := range exprs {
 				tree := root.Clone()
@@ -65,6 +73,10 @@ func (bh *BFSHelper) transform(root, node Node, path []int) {
 		for _, r := range rules {
 			for i, expr := range t.Projections {
 				ctx := TransformContext{}
+				for _, child := range t.Children() {
+					ctx.Cols = append(ctx.Cols, child.Columns()...)
+				}
+				ctx.ReplaceChildIdx = rand.Intn(len(t.children))
 				exprs := r.OneStep(expr, ctx)
 				for _, proj := range exprs {
 					tree := root.Clone()
