@@ -99,7 +99,8 @@ func fillAgg(a *util.Agg) {
 	for i := nCols - aggCols; i < nCols; i++ {
 		col := cols[i]
 		expr := &util.Func{Name: util.GetAggExprFromPropTable()}
-		expr.AppendArg(col)
+		//expr.AppendArg(col)
+		expr.AppendArg(util.NewColumn("c"+strconv.Itoa(i), col.RetType()))
 		expr.SetRetType(util.TypeMask(util.AggRetType(expr.Name, col)))
 		a.AggExprs = append(a.AggExprs, expr)
 	}
