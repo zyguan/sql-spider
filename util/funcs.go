@@ -2,7 +2,6 @@ package util
 
 import (
 	"math/rand"
-	"sync"
 )
 
 const (
@@ -115,38 +114,15 @@ const (
 	Const = "Constant"
 )
 
-var ProbabilityTable = []struct {
-	Name string
-	Prob float64
-}{
-	{FuncEQ, 0.01},
-
-	{Col, 0.1},
-	{Const, 0.1},
-}
-
-var (
-	totalP     float64
-	totalPOnce sync.Once
-)
-
 func GenExprFromProbTable(level int) string {
-	totalPOnce.Do(func() {
-		totalP = 0
-		for _, p := range ProbabilityTable {
-			totalP += p.Prob
-		}
-	})
-
-	x := rand.Float64() * totalP
-	for _, p := range ProbabilityTable {
-		x -= p.Prob
-		if x < 0 {
-			return p.Name
-		}
+	// Col: 0.1, Cons: 0.1, All Funcs: 0.8
+	r := rand.Float64()
+	if r < 0.1 {
+		return Col
+	} else if r < 0.2 {
+		return Const
 	}
-
-	return ProbabilityTable[len(ProbabilityTable)-1].Name
+	return funcList[rand.Intn(len(funcList))]
 }
 
 var NumArgs = map[string][]int{
@@ -254,4 +230,12 @@ var NumArgs = map[string][]int{
 	FuncGetVar:          {1, 1},
 	FuncBitCount:        {1, 1},
 	FuncGetParam:        {1, 1},
+}
+
+var funcList []string
+
+func init() {
+	for f := range NumArgs {
+		funcList = append(funcList, f)
+	}
 }
