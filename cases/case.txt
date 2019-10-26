@@ -1,0 +1,13 @@
+case 1 <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< 
+
+SELECT * FROM ( SELECT c0, MIN(c1) AS c1, MAX(c2) AS c2 FROM (
+  SELECT c0, COUNT(c1) AS c1, SUM(c2) AS c2 FROM (
+SELECT * FROM (   SELECT col_double AS c0, col_string AS c1, col_datetime AS c2 FROM t) t WHERE c0
+  ) AS t GROUP BY c0
+ ) AS t GROUP BY c0) t ORDER BY c0, c1, c2
+ 
+
+TiDB 返回 47 行， MySQL 返回 93 行；
+
+定位发现是 Coprocesser 处理下推条件 'WHERE c0' 有问题，过滤错了数据；
+
