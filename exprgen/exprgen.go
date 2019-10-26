@@ -163,7 +163,7 @@ func buildExpr(cols []util.Expr, tp util.TypeMask, validate util.ValidateExprFn)
 				}
 				return expr
 			case util.Const:
-				expr := genConstant(tp)
+				expr := GenConstant(tp)
 				if !validate(expr) {
 					continue
 				}
@@ -202,7 +202,7 @@ func buildExpr(cols []util.Expr, tp util.TypeMask, validate util.ValidateExprFn)
 	return gen(0, tp, validate)
 }
 
-func genConstant(tp util.TypeMask) util.Constant {
+func GenConstant(tp util.TypeMask) util.Constant {
 	if rand.Intn(100) <= 1 {
 		return util.NewConstant("NULL", tp.Any())
 	}

@@ -38,7 +38,7 @@ func (bh *BFSHelper) transform(root, node Node, path []int) {
 	switch t := node.(type) {
 	case *Filter:
 		for _, r := range rules {
-			exprs := r.OneStep(t.Where)
+			exprs := r.OneStep(t.Where, nil)
 
 			for _, where := range exprs {
 				tree := root.Clone()
