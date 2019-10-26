@@ -15,6 +15,16 @@ CREATE TABLE t (
 	col_double double default null,
 	col_decimal decimal(40, 20) default null,
 	col_string varchar(40) default null,
+	col_datetime datetime default null,
+	key(col_int),
+	key(col_double),
+	key(col_decimal),
+	key(col_string),
+	key(col_datetime),
+	key(col_int, col_double),
+	key(col_int, col_decimal),
+	key(col_int, col_string),
+	key(col_double, col_decimal)
 );`
 	fmt.Println(dropTable)
 	fmt.Println(createTable)
