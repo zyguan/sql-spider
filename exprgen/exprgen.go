@@ -109,7 +109,7 @@ func fillJoin(j *util.Join) {
 }
 
 func fillFilter(f *util.Filter) {
-	f.Where = buildExpr(f.Children()[0].Columns(), util.TypeNumber)
+	f.Where = buildExpr(f.Children()[0].Columns(), util.TypeNumber, util.MustContainCols)
 }
 
 func buildJoinCond(lCols []util.Expr, rCols []util.Expr) util.Expr {
@@ -120,9 +120,9 @@ func buildJoinCond(lCols []util.Expr, rCols []util.Expr) util.Expr {
 	return expr
 }
 
-func buildExpr(cols []util.Expr, tp util.TypeMask) util.Expr {
-	var gen func(lv int, tp util.TypeMask) util.Expr
-	gen = func(lv int, tp util.TypeMask) util.Expr {
+func buildExpr(cols []util.Expr, tp util.TypeMask, validate util.ValidateExprFn) util.Expr {
+	var gen func(lv int, tp util.TypeMask, validate util.ValidateExprFn) util.Expr
+	gen = func(lv int, tp util.TypeMask, validate util.ValidateExprFn) util.Expr {
 		count := 10000
 		for count > 0 {
 			count--
@@ -137,9 +137,17 @@ func buildExpr(cols []util.Expr, tp util.TypeMask) util.Expr {
 				if len(cc) == 0 {
 					continue
 				}
-				return cc[rand.Intn(len(cc))]
+				expr := cc[rand.Intn(len(cc))]
+				if !validate(expr) {
+					continue
+				}
+				return expr
 			case util.Const:
-				return genConstant(tp)
+				expr := genConstant(tp)
+				if !validate(expr) {
+					continue
+				}
+				return expr
 			default:
 				fnSpec := util.FuncInfos[f]
 				n := fnSpec.MinArgs
@@ -150,7 +158,7 @@ func buildExpr(cols []util.Expr, tp util.TypeMask) util.Expr {
 				expr.SetRetType(fnSpec.ReturnType)
 				ok := true
 				for i := 0; i < n; i++ {
-					subExpr := gen(lv+1, fnSpec.ArgTypeMask(i, expr.Children()))
+					subExpr := gen(lv+1, fnSpec.ArgTypeMask(i, expr.Children()), util.Pass)
 					if subExpr == nil {
 						ok = false
 						break
@@ -160,12 +168,15 @@ func buildExpr(cols []util.Expr, tp util.TypeMask) util.Expr {
 				if !ok {
 					continue
 				}
+				if fnSpec.Validate != nil && !fnSpec.Validate(expr) {
+					continue
+				}
 				return expr
 			}
 		}
 		panic("???")
 	}
-	return gen(0, tp)
+	return gen(0, tp, validate)
 }
 
 func genConstant(tp util.TypeMask) util.Constant {

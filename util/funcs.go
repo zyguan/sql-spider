@@ -145,6 +145,7 @@ type FuncInfo struct {
 	MaxArgs    int
 	ArgsTypes  []TypeMask
 	ReturnType TypeMask
+	Validate   ValidateExprFn
 }
 
 const (
@@ -173,19 +174,19 @@ func (fi FuncInfo) ArgTypeMask(i int, prvArgs []Expr) TypeMask {
 }
 
 var FuncInfos = map[string]FuncInfo{
-	FuncEQ:     {FuncEQ, 2, 2, nil, TypeNumber},
-	FuncGE:     {FuncGE, 2, 2, nil, TypeNumber},
-	FuncLE:     {FuncLE, 2, 2, nil, TypeNumber},
-	FuncNE:     {FuncNE, 2, 2, nil, TypeNumber},
-	FuncLT:     {FuncLT, 2, 2, nil, TypeNumber},
-	FuncGT:     {FuncGT, 2, 2, nil, TypeNumber},
-	FuncIsTrue: {FuncIsTrue, 1, 1, nil, TypeDefault},
-	FuncIf:     {FuncIf, 3, 3, nil, TypeDefault},
-	FuncIfnull: {FuncIfnull, 2, 2, nil, TypeDefault},
+	FuncEQ:     {FuncEQ, 2, 2, nil, TypeNumber, nil},
+	FuncGE:     {FuncGE, 2, 2, nil, TypeNumber, nil},
+	FuncLE:     {FuncLE, 2, 2, nil, TypeNumber, nil},
+	FuncNE:     {FuncNE, 2, 2, nil, TypeNumber, nil},
+	FuncLT:     {FuncLT, 2, 2, nil, TypeNumber, nil},
+	FuncGT:     {FuncGT, 2, 2, nil, TypeNumber, nil},
+	FuncIsTrue: {FuncIsTrue, 1, 1, nil, TypeDefault, nil},
+	FuncIf:     {FuncIf, 3, 3, nil, TypeDefault, nil},
+	FuncIfnull: {FuncIfnull, 2, 2, nil, TypeDefault, nil},
 
-	FuncPow:   {FuncPow, 2, 2, []TypeMask{TypeNumber, TypeNumber}, TypeNumber},
-	FuncLower: {FuncLower, 1, 1, []TypeMask{TypeMask(ETString)}, TypeMask(ETString)},
-	FuncUpper: {FuncUpper, 1, 1, []TypeMask{TypeMask(ETString)}, TypeMask(ETString)},
+	FuncPow:   {FuncPow, 2, 2, []TypeMask{TypeNumber, TypeNumber}, TypeNumber, nil},
+	FuncLower: {FuncLower, 1, 1, []TypeMask{TypeMask(ETString)}, TypeMask(ETString), nil},
+	FuncUpper: {FuncUpper, 1, 1, []TypeMask{TypeMask(ETString)}, TypeMask(ETString), nil},
 }
 
 //var NumArgs = map[string][]int{
