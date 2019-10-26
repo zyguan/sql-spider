@@ -72,3 +72,16 @@ SELECT count(*) from t t1, t t2 where t1.col_string != t2.col_datetime;
 TiDB 返回 0，MySQL 返回 8184；
 
 应该是计算 Hash 时 Join Key 计算结果有误， 导致 Join 不上；
+
+
+case 6 <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+SELECT * FROM ( SELECT c0, c1, MIN(c2) AS c2, MIN(c3) AS c3 FROM (
+SELECT * FROM (  SELECT c0, c1, c2, AVG(c3) AS c3 FROM (
+   SELECT col_int AS c0, col_double AS c1, col_decimal AS c2, col_datetime AS c3 FROM t
+  ) AS t GROUP BY c0, c1, c2) t WHERE FLOOR((LN(IF(c1, -0.000, (c1 ^ COS(c2)))) < c2))
+ ) AS t GROUP BY c0, c1) t ORDER BY c0, c1, c2, c3
+ 
+MySQL 无结果， TiDB 输出 41 行；
+
+定位后原因在于 IF(c1, -0.000, (c1 ^ COS(c2)) 结果和 MySQL 不一致，主要为 IF 的第一个参数为浮点数时有问题；
