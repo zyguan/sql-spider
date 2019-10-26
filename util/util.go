@@ -41,6 +41,8 @@ type Node interface {
 	Children() []Node
 }
 
+type Tree Node
+
 type baseNode struct {
 	children []Node
 }
@@ -54,8 +56,12 @@ type Filter struct {
 	Where Expr
 }
 
+func (f *Filter) NumCols() int {
+	return f.children[0].NumCols()
+}
+
 func (f *Filter) ToSQL() string {
-	return "SELECT * FROM (" + f.Children()[0].ToSQL() + ") WHERE " + f.Where.ToSQL()
+	return "SELECT * FROM (" + f.children[0].ToSQL() + ") WHERE " + f.Where.ToSQL()
 }
 
 type Projector struct {
@@ -63,12 +69,16 @@ type Projector struct {
 	Projections []Expr
 }
 
+func (p *Projector) NumCols() int {
+	return len(p.Projections)
+}
+
 func (p *Projector) ToSQL() string {
 	cols := make([]string, len(p.Projections))
 	for i, e := range p.Projections {
 		cols[i] = e.ToSQL() + " AS c" + strconv.Itoa(i)
 	}
-	return "SELECT " + strings.Join(cols, ", ") + " FROM (" + p.Children()[0].ToSQL() + ")"
+	return "SELECT " + strings.Join(cols, ", ") + " FROM (" + p.children[0].ToSQL() + ")"
 }
 
 type Join struct {
@@ -76,8 +86,12 @@ type Join struct {
 	JoinCond Expr
 }
 
+func (j *Join) NumCols() int {
+	return j.children[0].NumCols() + j.children[1].NumCols()
+}
+
 func (j *Join) ToSQL() string {
-	l, r := j.Children()[0], j.Children()[1]
+	l, r := j.children[0], j.children[1]
 	cols := make([]string, l.NumCols()+r.NumCols())
 	for i := 0; i < l.NumCols(); i++ {
 		cols[i] = "t1.c" + strconv.Itoa(i) + " AS " + "c" + strconv.Itoa(i)
@@ -93,12 +107,16 @@ type Table struct {
 	Columns []string
 }
 
+func (t *Table) NumCols() int {
+	return len(t.Columns)
+}
+
 func (t *Table) ToSQL() string {
 	cols := make([]string, len(t.Columns))
 	for i, col := range t.Columns {
 		cols[i] = col + " AS c" + strconv.Itoa(i)
 	}
-	return "SELECT " + strings.Join(cols, ", ") + " FROM (" + t.Children()[0].ToSQL() + ")"
+	return "SELECT " + strings.Join(cols, ", ") + " FROM (" + t.children[0].ToSQL() + ")"
 }
 
 type TableSchema interface {
