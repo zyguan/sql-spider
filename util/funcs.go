@@ -9,78 +9,41 @@ const (
 	FuncIsTrue          = "IsTrue"
 	FuncIf              = "If"
 	FuncIfnull          = "Ifnull"
-	FuncASCII           = "ASCII"
-	FuncBin             = "Bin"
-	FuncConvert         = "Convert"
-	FuncExportSet       = "ExportSet"
-	FuncFormat          = "Format"
-	FuncFromBase64      = "from_base64"
-	FuncInsertFunc      = "InsertFunc"
-	FuncInstr           = "Instr"
 	FuncLcase           = "Lcase"
 	FuncLeft            = "Left"
 	FuncRight           = "Right"
 	FuncLength          = "Length"
-	FuncLoadFile        = "LoadFile"
-	FuncLocate          = "Locate"
 	FuncLower           = "Lower"
-	FuncLpad            = "Lpad"
 	FuncLTrim           = "LTrim"
-	FuncMid             = "Mid"
 	FuncOct             = "Oct"
-	FuncOctetLength     = "OctetLength"
-	FuncOrd             = "Ord"
-	FuncPosition        = "Position"
-	FuncQuote           = "Quote"
 	FuncRepeat          = "Repeat"
 	FuncReplace         = "Replace"
 	FuncReverse         = "Reverse"
 	FuncRTrim           = "RTrim"
-	FuncSpace           = "Space"
-	FuncStrcmp          = "Strcmp"
-	FuncSubstring       = "Substring"
 	FuncSubstr          = "Substr"
-	FuncSubstringIndex  = "SubstringIndex"
 	FuncToBase64        = "to_base64"
-	FuncTrim            = "Trim"
 	FuncUpper           = "Upper"
 	FuncUcase           = "Ucase"
 	FuncHex             = "Hex"
-	FuncUnhex           = "Unhex"
-	FuncRpad            = "Rpad"
-	FuncBitLength       = "BitLength"
-	FuncCharLength      = "CharLength"
-	FuncCharacterLength = "CharacterLength"
-	FuncFindInSet       = "FindInSet"
 	FuncAbs             = "Abs"
 	FuncAcos            = "Acos"
 	FuncAsin            = "Asin"
 	FuncAtan            = "Atan"
-	FuncAtan2           = "Atan2"
 	FuncCeil            = "Ceil"
-	FuncCeiling         = "Ceiling"
-	FuncConv            = "Conv"
 	FuncCos             = "Cos"
 	FuncCot             = "Cot"
-	FuncCRC32           = "CRC32"
-	FuncDegrees         = "Degrees"
 	FuncExp             = "Exp"
 	FuncFloor           = "Floor"
 	FuncLn              = "Ln"
 	FuncLog             = "Log"
 	FuncLog2            = "Log2"
-	FuncLog10           = "Log10"
-	FuncPI              = "PI"
 	FuncPow             = "Pow"
 	FuncPower           = "Power"
-	FuncRadians         = "Radians"
-	FuncRand            = "Rand"
 	FuncRound           = "Round"
 	FuncSign            = "Sign"
 	FuncSin             = "Sin"
 	FuncSqrt            = "Sqrt"
 	FuncTan             = "Tan"
-	FuncTruncate        = "Truncate"
 	FuncLogicAnd        = "LogicAnd"
 	FuncLogicOr         = "LogicOr"
 	FuncLogicXor        = "LogicXor"
@@ -96,21 +59,11 @@ const (
 	FuncDiv             = "Div"
 	FuncMul             = "Mul"
 	FuncIntDiv          = "IntDiv"
-	FuncBitNeg          = "BitNeg"
 	FuncAnd             = "And"
-	FuncLeftShift       = "LeftShift"
-	FuncRightShift      = "RightShift"
-	FuncUnaryNot        = "UnaryNot"
 	FuncOr              = "Or"
 	FuncXor             = "Xor"
 	FuncUnaryMinus      = "UnaryMinus"
-	FuncLike            = "Like"
-	FuncRegexp          = "Regexp"
-	FuncSetVar          = "SetVar"
-	FuncGetVar          = "GetVar"
-	FuncBitCount        = "BitCount"
-	FuncGetParam        = "GetParam"
-
+	
 	Col   = "Column"
 	Const = "Constant"
 )
@@ -230,19 +183,6 @@ var FuncInfos = map[string]FuncInfo{
 	FuncOr:       {FuncOr, 2, 2, []TypeMask{TypeNumber, TypeNumber}, TypeNumber, nil},
 	FuncXor:      {FuncXor, 2, 2, []TypeMask{TypeNumber, TypeNumber}, TypeNumber, nil},
 }
-
-//var NumArgs = map[string][]int{
-//	FuncLeftShift:       {2, 2},
-//	FuncRightShift:      {2, 2},
-//	FuncUnaryNot:        {1, 1},
-//	FuncUnaryMinus:      {1, 1},
-//	FuncLike:            {3, 3},
-//	FuncRegexp:          {2, 2},
-//	FuncSetVar:          {2, 2},
-//	FuncGetVar:          {1, 1},
-//	FuncBitCount:        {1, 1},
-//	FuncGetParam:        {1, 1},
-//}
 
 var funcList []string
 
