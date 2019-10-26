@@ -50,9 +50,24 @@ case 4 <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
 SELECT * FROM ( SELECT CEIL(TAN(IF(c1, c1, c1))) AS c0 FROM (
   SELECT col_string AS c0, col_datetime AS c1 FROM t
- ) AS t) t ORDER BY c0
+ ) AS t) t ORDER BY c0;
  
 MySQL 和 TiDB 都返回 100 行，但是最后一行的值一个是 9 一个是 10；
 
 定位后发现是 TiDB 内的 TAN 实现和 MySQL 精度相差太多；
 
+case 5 <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+SELECT * FROM ( SELECT c0, c1, c0 AS c2, c1 AS c3, MAX(c4) AS c4 FROM (
+  SELECT t1.c0 AS c0,t1.c1 AS c1,t2.c0 AS c2,t2.c1 AS c3,t2.c2 AS c4 FROM (
+   SELECT col_double AS c0, col_string AS c1 FROM t) AS t1, (
+   SELECT col_int AS c0, col_string AS c1, col_datetime AS c2 FROM t) AS t2
+   WHERE (t1.c1 != t2.c2)
+ ) AS t GROUP BY c0, c1, c0, c1) t ORDER BY c0, c1, c2, c3, c4 LIMIT 24;
+ 
+化简后的复现 SQL 如下：
+SELECT count(*) from t t1, t t2 where t1.col_string != t2.col_datetime;
+
+TiDB 返回 0 行，MySQL 返回 8184 行；
+
+应该是计算 Hash 时 Join Key 计算结果有误， 导致 Join 不上；
