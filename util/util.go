@@ -43,6 +43,15 @@ func (f *Func) Children() []Expr {
 }
 
 func (f *Func) ToSQL() string {
+	defer func() {
+		if r := recover(); r != nil {
+			fmt.Println("====================================")
+			fmt.Println(f.Name, f.children)
+			fmt.Println("====================================")
+			panic("???")
+		}	
+	}()
+	
 	infixFn := func(op string) string {
 		return fmt.Sprintf("(%s) %s (%s)", f.children[0].ToSQL(), op, f.children[1].ToSQL())
 	}
