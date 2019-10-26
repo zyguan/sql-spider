@@ -187,6 +187,33 @@ type Node interface {
 
 type Tree Node
 
+type NodeType uint
+const (
+	NTJoin NodeType = 1 << iota
+	NTAgg
+	NTProjector
+	NTFilter
+	NTTable
+	NTLimit
+	NTOrderBy
+)
+
+type NodeTypeMask uint
+
+func (m NodeTypeMask) Contain(tp NodeType) bool {
+	return uint(m) & uint(tp) > 0
+}
+
+func (m NodeTypeMask) Add(tp NodeType) NodeTypeMask {
+	m = NodeTypeMask(uint(m) | uint(tp))
+	return m
+}
+
+func (m NodeTypeMask) Remove(tp NodeType) NodeTypeMask {
+	m = NodeTypeMask(uint(m) ^ uint(tp))
+	return m
+}
+
 type baseNode struct {
 	children []Node
 }

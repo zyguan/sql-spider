@@ -7,6 +7,9 @@ import (
 	"github.com/zyguan/sqlgen/util"
 )
 
+
+
+
 type NodeGenerator interface {
 	Generate(level int) util.Node
 }
@@ -14,18 +17,27 @@ type NodeGenerator interface {
 type RandomNodeGenerator struct {
 }
 
-func randomGenNode(level int) util.Node {
-	propTable := []struct {
+func randomGenNode(level int, mask util.NodeTypeMask) util.Node {
+	type Entry struct {
 		Node util.Node
 		Prop float64
-	}{
+	}
+	propTable := []Entry {
 		{&util.Join{}, 0.3 - 0.1*float64(level)},
 		{&util.Agg{}, 0.3 - 0.1*float64(level)},
-		{&util.Projector{}, 0.2 - 0.1*float64(level)},
-		{&util.Filter{}, 0.2 + 0.15*float64(level)},
 		{&util.Table{}, 0.1 + 0.15*float64(level)},
-		{&util.Limit{}, 0.3 - 0.1*float64(level)},
-		{&util.OrderBy{}, 0.3 - 0.1*float64(level)},
+	}
+	if !mask.Contain(util.NTProjector) {
+		propTable = append(propTable, Entry{&util.Projector{}, 0.2/* - 0.1*float64(level)*/})
+	}
+	if !mask.Contain(util.NTFilter) {
+		propTable = append(propTable, Entry{&util.Filter{}, 0.2/* + 0.15 *float64(level)*/})
+	}
+	if !mask.Contain(util.NTOrderBy) {
+		propTable = append(propTable, Entry{&util.OrderBy{}, 0.3/* - 0.1*float64(level)*/})
+	}
+	if !mask.Contain(util.NTLimit) {
+		propTable = append(propTable, Entry{&util.Limit{}, 0.3/* - 0.1 * float64(level)*/})
 	}
 
 	var total float64
@@ -43,20 +55,34 @@ func randomGenNode(level int) util.Node {
 	return nil
 }
 
-func (rn *RandomNodeGenerator) Generate(level int) util.Node {
+func (rn *RandomNodeGenerator) Generate(level int, mask util.NodeTypeMask) util.Node {
 	// random pick node type
-	node := randomGenNode(level)
+	var node util.Node
+	if level == 0 {
+		node = &util.OrderBy{}
+		mask.Add(util.NTOrderBy)
+	} else {
+		node = randomGenNode(level, mask)
+	}
 	switch x := node.(type) {
 	case *util.Table:
-	case *util.Filter, *util.Projector, *util.Agg, *util.OrderBy:
-		x.AddChild(rn.Generate(level + 1))
-	case *util.Join:
-		join := node.(*util.Join)
-		join.AddChild(rn.Generate(level + 1))
-		join.AddChild(rn.Generate(level + 1))
+	case *util.Filter:
+		x.AddChild(rn.Generate(level+1, mask.Add(util.NTFilter)))
+	case *util.Projector:
+		x.AddChild(rn.Generate(level+1, mask.Add(util.NTProjector)))
+	case *util.OrderBy:
+		x.AddChild(rn.Generate(level+1, mask.Add(util.NTOrderBy)))
 	case *util.Limit:
-		limit := node.(*util.Limit)
-		limit.AddChild(rn.Generate(level + 1))
+		x.AddChild(rn.Generate(level+1, mask.Add(util.NTLimit)))
+	case *util.Agg:
+		mask.Remove(util.NTFilter | util.NTProjector | util.NTOrderBy | util.NTLimit)
+		mask.Add(util.NTAgg)
+		x.AddChild(rn.Generate(level+1, mask))
+	case *util.Join:
+		mask.Remove(util.NTFilter | util.NTProjector | util.NTOrderBy | util.NTLimit)
+		mask.Add(util.NTJoin)
+		x.AddChild(rn.Generate(level + 1, mask))
+		x.AddChild(rn.Generate(level + 1, mask))
 	}
 	return node
 }
@@ -66,7 +92,7 @@ func GenerateNode(number int) []util.Node {
 	var result []util.Node
 	hashmap := map[string]bool{}
 	for count := 0; count < number; {
-		newNode := generator.Generate(0)
+		newNode := generator.Generate(0, 0)
 		nodeStr := newNode.ToString()
 		if _, ok := hashmap[nodeStr]; !ok {
 			fmt.Println(newNode.ToString())
