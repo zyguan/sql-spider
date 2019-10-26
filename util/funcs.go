@@ -28,7 +28,7 @@ var (
 	totalPOnce sync.Once
 )
 
-func GenExprFromProbTable() string {
+func GenExprFromProbTable(level int) string {
 	totalPOnce.Do(func() {
 		totalP = 0
 		for _, p := range ProbabilityTable {
