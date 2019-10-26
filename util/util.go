@@ -11,6 +11,9 @@ type Type uint
 type TypeMask uint
 
 func (tm TypeMask) Contain(t Type) bool {
+	if t == 0 {
+		panic("??")
+	}
 	return uint(tm)&uint(t) > 0
 }
 

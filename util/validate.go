@@ -42,7 +42,7 @@ func Or(v0 ValidateExprFn, vs ...ValidateExprFn) ValidateExprFn {
 
 func MustContainCols(expr Expr) bool {
 	switch e := expr.(type) {
-	case Column:
+	case Column, *Column:
 		return true
 	case *Func:
 		for _, arg := range e.children {
