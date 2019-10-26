@@ -172,12 +172,13 @@ func genConstant(tp util.TypeMask) util.Constant {
 	var ct util.Type
 	var cv string
 	tps := tp.All()
+
 	t := rand.Intn(len(tps))
 	if t == len(tps) {
 		ct = tp.Any()
 		cv = "NULL"
 	} else {
-		ct := tps[t]
+		ct = tps[t]
 		switch ct {
 		case util.ETInt:
 			cv = genIntLiteral()
