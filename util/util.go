@@ -49,10 +49,13 @@ func (f *Func) ToSQL() string {
 			fmt.Println(f.Name, f.children)
 			fmt.Println("====================================")
 			panic("???")
-		}	
+		}
 	}()
-	
+
 	infixFn := func(op string) string {
+		if len(f.children) < 2 {
+			fmt.Println(">>")
+		}
 		return fmt.Sprintf("(%s) %s (%s)", f.children[0].ToSQL(), op, f.children[1].ToSQL())
 	}
 	switch f.Name {
@@ -229,7 +232,11 @@ type Projector struct {
 }
 
 func (p *Projector) Columns() []Expr {
-	return p.Projections
+	cols := make([]Expr, len(p.Projections))
+	for i, e := range p.Projections {
+		cols[i] = NewColumn("c"+strconv.Itoa(i), e.RetType())
+	}
+	return cols
 }
 
 func (p *Projector) ToSQL() string {
@@ -396,7 +403,7 @@ type Table struct {
 func (t *Table) Columns() []Expr {
 	cols := make([]Expr, len(t.SelectedColumns))
 	for i, idx := range t.SelectedColumns {
-		cols[i] = t.Schema.Columns[idx]
+		cols[i] = NewColumn("c"+strconv.Itoa(i), t.Schema.Columns[idx].RetType())
 	}
 	return cols
 }
