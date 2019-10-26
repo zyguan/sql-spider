@@ -30,8 +30,20 @@ func main() {
 		trees = append(trees, exprgen.GenExprTrees(et, ts, 3)...)
 	}
 	for _, t := range trees {
-		fmt.Println(t.ToSQL())
+		safePrint(t)
 	}
+}
+
+func safePrint(t util.Tree) {
+	defer func() {
+		if r := recover(); r != nil {
+			fmt.Println("============================")
+			fmt.Println(t.ToString())
+			fmt.Println("============================")
+			panic("??")
+		}
+	}()
+	fmt.Println(t.ToSQL())
 }
 
 func init() {
