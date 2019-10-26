@@ -45,26 +45,13 @@ func randomGenNode(level int) util.Node {
 func (rn *RandomNodeGenerator) Generate(level int) util.Node {
 	// random pick node type
 	node := randomGenNode(level)
-	switch node.(type) {
+	switch x := node.(type) {
 	case *util.Table:
-		break
-	case *util.Filter:
-		filter := node.(*util.Filter)
-		filter.AddChild(rn.Generate(level + 1))
-		break
-	case *util.Projector:
-		proj := node.(*util.Projector)
-		proj.AddChild(rn.Generate(level + 1))
-		break
-	case *util.Agg:
-		agg := node.(*util.Agg)
-		agg.AddChild(rn.Generate(level + 1))
-		break
+	case *util.Filter, *util.Projector, *util.Agg, *util.OrderBy:
+		x.AddChild(rn.Generate(level + 1))
 	case *util.Join:
-		join := node.(*util.Join)
-		join.AddChild(rn.Generate(level + 1))
-		join.AddChild(rn.Generate(level + 1))
-		break
+		x.AddChild(rn.Generate(level + 1))
+		x.AddChild(rn.Generate(level + 1))
 	}
 	return node
 }
