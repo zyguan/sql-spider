@@ -453,7 +453,7 @@ func (a *Agg) ToBeautySQL(level int) string {
 	}
 	return strings.Repeat(" ", level) + "SELECT " + strings.Join(aggs, ", ") + " FROM (\n" +
 		a.children[0].ToBeautySQL(level+1) + "\n" +
-		strings.Repeat(" ", level) + ") AS t GROUP BY  " + groupBySQL
+		strings.Repeat(" ", level) + ") AS t " + groupBySQL
 }
 
 func (a *Agg) Clone() Node {
