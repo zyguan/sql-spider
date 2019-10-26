@@ -450,8 +450,13 @@ func (a *Agg) ToSQL() string {
 func (a *Agg) ToBeautySQL(level int) string {
 	ret := a.Columns()
 	aggs := make([]string, 0, len(ret))
-	for _, e := range ret {
-		aggs = append(aggs, e.ToSQL())
+	for i, e := range ret {
+		name := fmt.Sprintf("c%v", i)
+		eSQL := e.ToSQL()
+		if eSQL != name {
+			eSQL += " AS " + name
+		}
+		aggs = append(aggs, eSQL)
 	}
 	groupBy := make([]string, 0, len(a.GroupByExprs))
 	for _, e := range a.GroupByExprs {
