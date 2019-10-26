@@ -138,7 +138,7 @@ const (
 	TypeNumber  TypeMask = TypeMask(ETInt | ETReal | ETDecimal)
 )
 
-func (fi FuncInfo) ArgType(i int) Type {
+func (fi FuncInfo) ArgType(i int) TypeMask {
 	if len(fi.ArgsTypes) < i {
 		return TypeDefault
 	}
