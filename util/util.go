@@ -9,7 +9,7 @@ import (
 type Type int
 
 const (
-	ETInt = iota
+	ETInt = 1 << iota
 	ETReal
 	ETDecimal
 	ETString
