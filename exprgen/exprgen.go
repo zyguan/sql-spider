@@ -90,8 +90,8 @@ func fillFilter(f *util.Filter) {
 func buildJoinCond(lCols []util.Expr, rCols []util.Expr) util.Expr {
 	lIdx, rIdx := rand.Intn(len(lCols)), rand.Intn(len(rCols))
 	expr := &util.Func{Name: util.FuncEQ}
-	expr.AppendArg(util.NewColumn("t1.c" + strconv.Itoa(lIdx), lCols[lIdx].RetType()))
-	expr.AppendArg(util.NewColumn("t2.c" + strconv.Itoa(rIdx), rCols[rIdx].RetType()))
+	expr.AppendArg(util.NewColumn("t1.c"+strconv.Itoa(lIdx), lCols[lIdx].RetType()))
+	expr.AppendArg(util.NewColumn("t2.c"+strconv.Itoa(rIdx), rCols[rIdx].RetType()))
 	return expr
 }
 
@@ -105,7 +105,7 @@ func buildExpr(cols []util.Expr, tp util.TypeMask) util.Expr {
 			case util.Col:
 				cc := make([]util.Expr, 0, len(cols))
 				for _, col := range cols {
-					if util.TypeMask(col.RetType())&tp > 0 {
+					if tp.Contain(col.RetType()) {
 						cc = append(cc, col)
 					}
 				}
