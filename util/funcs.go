@@ -118,7 +118,7 @@ const (
 func GenExprFromProbTable(tp TypeMask, level int) string {
 	// Col: 0.1, Cons: 0.1, All Funcs: 0.8
 	r := rand.Float64()
-	r *= math.Pow(0.7, float64(level))
+	r *= math.Pow(0.8, float64(level))
 	if r < 0.1 {
 		return Col
 	} else if r < 0.2 {
