@@ -54,7 +54,7 @@ func fillProj(p *util.Projector) {
 	}
 	p.Projections = make([]util.Expr, nProjected)
 	for i := 0; i < nProjected; i++ {
-		p.Projections[i] = buildExpr(nCols)
+		p.Projections[i] = buildExpr(nCols, util.TypeDefault)
 	}
 }
 
@@ -65,7 +65,7 @@ func fillJoin(j *util.Join) {
 
 func fillFilter(f *util.Filter) {
 	nCols := f.Children()[0].NumCols()
-	f.Where = buildExpr(nCols)
+	f.Where = buildExpr(nCols, util.TypeDefault)
 }
 
 func buildJoinCond(nLCols, nRCols int) util.Expr {
@@ -113,18 +113,19 @@ func buildExpr(nCols int, tp util.TypeMask) util.Expr {
 
 func genConstant(tp util.TypeMask) util.Constant {
 	t := rand.Intn(30)
-	var c util.Constant
+	var ct util.Type
+	var cv string
 	if t < 10 && tp.Contain(util.ETInt) {
-		c.T = util.ETInt
-		c.Val = genIntLiteral()
+		ct = util.ETInt
+		cv = genIntLiteral()
 	} else if t < 20 && tp.Contain(util.ETReal) {
-		c.T = util.ETReal
-		c.Val = genRealLiteral()
+		ct = util.ETReal
+		cv = genRealLiteral()
 	} else {
-		c.T = util.ETString
-		c.Val = genStringLiteral()
+		ct = util.ETString
+		cv = genStringLiteral()
 	}
-	return c
+	return util.NewConstant(cv, ct)
 }
 
 func genIntLiteral() string {

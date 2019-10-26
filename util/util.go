@@ -109,8 +109,12 @@ func (f *Func) RetType() Type {
 }
 
 type Constant struct {
-	Val string
-	T   Type
+	val     string
+	retType Type
+}
+
+func NewConstant(val string, retType Type) Constant {
+	return Constant{val, retType}
 }
 
 func (c Constant) Children() []Expr {
@@ -118,7 +122,7 @@ func (c Constant) Children() []Expr {
 }
 
 func (c Constant) ToSQL() string {
-	return c.Val
+	return c.val
 }
 
 func (c Constant) Clone() Expr {
@@ -126,12 +130,16 @@ func (c Constant) Clone() Expr {
 }
 
 func (c Constant) RetType() Type {
-	return c.T
+	return c.retType
 }
 
 type Column struct {
 	col     string
 	retType Type
+}
+
+func NewColumn(col string, retType Type) Column {
+	return Column{col, retType}
 }
 
 func (c Column) Children() []Expr {
