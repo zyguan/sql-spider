@@ -82,7 +82,7 @@ func fillProj(p *util.Projector) {
 	}
 	p.Projections = make([]util.Expr, nProjected)
 	for i := 0; i < nProjected; i++ {
-		p.Projections[i] = buildExpr(cols, util.TypeDefault)
+		p.Projections[i] = buildExpr(cols, util.TypeDefault, util.Pass)
 	}
 }
 
