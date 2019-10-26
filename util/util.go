@@ -24,6 +24,16 @@ func (tm TypeMask) Any() Type {
 	panic("??")
 }
 
+func (tm TypeMask) All() []Type {
+	ret := make([]Type, 0, 15)
+	for i := uint(0); i < 10; i++ {
+		if tm&TypeMask(i) > 0 {
+			ret = append(ret, Type(1<<i))
+		}
+	}
+	return ret
+}
+
 const (
 	ETInt Type = 1 << iota
 	ETReal

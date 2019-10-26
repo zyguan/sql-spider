@@ -5,6 +5,7 @@ import (
 	"math"
 	"math/rand"
 	"strconv"
+	"time"
 
 	"github.com/zyguan/sqlgen/util"
 )
@@ -44,22 +45,15 @@ func fillNode(node util.Node, ts util.TableSchemas, isRoot bool) {
 	case *util.Agg:
 		fillAgg(x)
 	case *util.OrderBy:
-		fillOrderBy(x, ts, isRoot)
+		fillOrderBy(x, ts)
 	case *util.Limit:
 		fillLimit(x)
 	}
 }
 
-func fillOrderBy(o *util.OrderBy, ts util.TableSchemas, isRoot bool) {
+func fillOrderBy(o *util.OrderBy, ts util.TableSchemas) {
 	for i, col := range o.Children()[0].Columns() {
-		if isRoot || rand.Float64() < 0.5 {
-			o.OrderByExprs = append(o.OrderByExprs, util.NewColumn("c"+strconv.Itoa(i), col.RetType()))
-		}
-	}
-	if len(o.OrderByExprs) == 0 {
-		cols := o.Children()[0].Columns()
-		idx := rand.Intn(len(cols))
-		o.OrderByExprs = []util.Expr{util.NewColumn("c"+strconv.Itoa(idx), cols[idx].RetType())}
+		o.OrderByExprs = append(o.OrderByExprs, util.NewColumn("c"+strconv.Itoa(i), col.RetType()))
 	}
 }
 
@@ -175,23 +169,35 @@ func buildExpr(cols []util.Expr, tp util.TypeMask) util.Expr {
 }
 
 func genConstant(tp util.TypeMask) util.Constant {
-	t := rand.Intn(35)
 	var ct util.Type
 	var cv string
-	if t < 10 && tp.Contain(util.ETInt) {
-		ct = util.ETInt
-		cv = genIntLiteral()
-	} else if t < 20 && tp.Contain(util.ETReal) {
-		ct = util.ETReal
-		cv = genRealLiteral()
-	} else if t < 30 && tp.Contain(util.ETString) {
-		ct = util.ETString
-		cv = genStringLiteral()
-	} else {
+	tps := tp.All()
+	t := rand.Intn(len(tps))
+	if t == len(tps) {
 		ct = tp.Any()
 		cv = "NULL"
+	} else {
+		ct := tps[t]
+		switch ct {
+		case util.ETInt:
+			cv = genIntLiteral()
+		case util.ETReal, util.ETDecimal:
+			cv = genRealLiteral()
+		case util.ETString:
+			cv = genStringLiteral()
+		case util.ETDatetime:
+			cv = genDateTimeLiteral()
+		default:
+			ct = tp.Any()
+			cv = "NULL"
+		}
 	}
 	return util.NewConstant(cv, ct)
+}
+
+func genDateTimeLiteral() string {
+	t := time.Unix(rand.Int63n(2000000000), rand.Int63n(30000000000))
+	return t.Format("2006-01-02 15:04:05")
 }
 
 func genIntLiteral() string {
