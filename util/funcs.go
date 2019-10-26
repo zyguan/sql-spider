@@ -117,6 +117,9 @@ const (
 func GenExprFromProbTable(level int) string {
 	// Col: 0.1, Cons: 0.1, All Funcs: 0.8
 	r := rand.Float64()
+	if level > 6 {
+		r *= 0.2
+	}
 	if r < 0.1 {
 		return Col
 	} else if r < 0.2 {
