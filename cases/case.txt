@@ -43,7 +43,7 @@ SELECT * FROM (  SELECT SIN(IFNULL(c0, DAYOFWEEK('1999-12-01 12:50:06'))) AS c0 
   
 MySQL 返回空结果无报错，TiDB panic；
 
-定位后发现是处理 LogicalOr 改写逻辑有问题， 导致子表达式没有被赋值，出现空指针
+定位后发现是处理 LogicalOr 改写逻辑有问题， 导致子表达式没有被赋值，出现空指针；
 
 
 case 4 <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
@@ -54,7 +54,8 @@ SELECT * FROM ( SELECT CEIL(TAN(IF(c1, c1, c1))) AS c0 FROM (
  
 MySQL 和 TiDB 都返回 100 行，但是最后一行的值一个是 9 一个是 10；
 
-定位后发现是 TiDB 内的 TAN 实现和 MySQL 精度相差太多；
+定位后发现是 TiDB 内的 TAN 实现和 MySQL 精度误差较大，然后被 CEIL 放大， 导致最后结果有误；
+
 
 case 5 <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
@@ -68,6 +69,6 @@ SELECT * FROM ( SELECT c0, c1, c0 AS c2, c1 AS c3, MAX(c4) AS c4 FROM (
 化简后的复现 SQL 如下：
 SELECT count(*) from t t1, t t2 where t1.col_string != t2.col_datetime;
 
-TiDB 返回 0 行，MySQL 返回 8184 行；
+TiDB 返回 0，MySQL 返回 8184；
 
 应该是计算 Hash 时 Join Key 计算结果有误， 导致 Join 不上；
