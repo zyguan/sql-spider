@@ -6,10 +6,10 @@ import (
 	"strings"
 )
 
-type Type int
+type Type uint
 
 const (
-	ETInt = 1 << iota
+	ETInt Type = 1 << iota
 	ETReal
 	ETDecimal
 	ETString
