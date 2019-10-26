@@ -272,10 +272,6 @@ func (f *Filter) Columns() []Expr {
 }
 
 func (f *Filter) ToBeautySQL(level int) string {
-	if _, ok := f.children[0].(*Join); ok {
-		return f.children[0].ToBeautySQL(level) + " AND " + f.Where.ToSQL()
-	}
-
 	return "SELECT * FROM (" +
 		f.children[0].ToBeautySQL(level) + ") t WHERE " + f.Where.ToSQL()
 }
