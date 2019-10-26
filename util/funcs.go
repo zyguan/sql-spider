@@ -142,7 +142,7 @@ const (
 )
 
 func (fi FuncInfo) ArgTypeMask(i int) TypeMask {
-	if len(fi.ArgsTypes) < i {
+	if len(fi.ArgsTypes) <= i {
 		return TypeDefault
 	}
 	return fi.ArgsTypes[i]
