@@ -90,8 +90,8 @@ func fillFilter(f *util.Filter) {
 func buildJoinCond(lCols []util.Expr, rCols []util.Expr) util.Expr {
 	lIdx, rIdx := rand.Intn(len(lCols)), rand.Intn(len(rCols))
 	expr := &util.Func{Name: util.FuncEQ}
-	expr.AppendArg(util.Column{"t1.c" + strconv.Itoa(lIdx), lCols[lIdx].RetType()})
-	expr.AppendArg(util.Column{"t2.c" + strconv.Itoa(rIdx), rCols[rIdx].RetType()})
+	expr.AppendArg(util.NewColumn("t1.c" + strconv.Itoa(lIdx), lCols[lIdx].RetType()))
+	expr.AppendArg(util.NewColumn("t2.c" + strconv.Itoa(rIdx), rCols[rIdx].RetType()))
 	return expr
 }
 
