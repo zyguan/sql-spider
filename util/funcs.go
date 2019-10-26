@@ -185,6 +185,7 @@ var FuncInfos = map[string]FuncInfo{
 
 	FuncPow:   {FuncPow, 2, 2, []TypeMask{TypeNumber, TypeNumber}, TypeNumber},
 	FuncLower: {FuncLower, 1, 1, []TypeMask{TypeMask(ETString)}, TypeMask(ETString)},
+	FuncUpper: {FuncUpper, 1, 1, []TypeMask{TypeMask(ETString)}, TypeMask(ETString)},
 }
 
 //var NumArgs = map[string][]int{
