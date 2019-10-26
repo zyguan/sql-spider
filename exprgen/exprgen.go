@@ -10,6 +10,15 @@ import (
 )
 
 func GenExprTrees(tree util.Tree, ts util.TableSchemas, n int) []util.Tree {
+	defer func() {
+		if r := recover(); r != nil {
+			fmt.Println("==================================")
+			fmt.Println(tree.ToString())
+			fmt.Println("==================================")
+			panic("???")
+		}
+	}()
+
 	trees := make([]util.Tree, 0, n)
 	for i := 0; i < n; i++ {
 		t := tree.Clone()
@@ -76,7 +85,7 @@ func fillAgg(a *util.Agg) {
 	if aggCols == 0 {
 		aggCols = 1
 	}
-	for i := 0; i < aggCols-1; i ++ {
+	for i := 0; i < aggCols; i ++ {
 		colName := fmt.Sprint("c%d", i)
 		a.GroupByExprs = append(a.GroupByExprs, util.NewColumn(colName, cols[i].RetType()))
 	}
