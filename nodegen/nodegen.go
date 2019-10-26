@@ -15,17 +15,24 @@ type RandomNodeGenerator struct {
 }
 
 func randomGenNode(level int) util.Node {
-	p := rand.Float64()
 	propTable := []struct {
 		Node util.Node
 		Prop float64
 	}{
-		{&util.Join{}, 0.3 - 0.1 * float64(level)},
-		{&util.Agg{}, 0.3 - 0.1 * float64(level)},
-		{&util.Projector{}, 0.2 - 0.1 * float64(level)},
-		{&util.Filter{}, 0.2 + 0.15 * float64(level)},
-		{&util.Table{}, 0.1 + 0.15 * float64(level)},
+		{&util.Join{}, 0.3 - 0.1*float64(level)},
+		{&util.Agg{}, 0.3 - 0.1*float64(level)},
+		{&util.Projector{}, 0.2 - 0.1*float64(level)},
+		{&util.Filter{}, 0.2 + 0.15*float64(level)},
+		{&util.Table{}, 0.1 + 0.15*float64(level)},
+		{&util.OrderBy{}, 0.3 - 0.1*float64(level)},
 	}
+
+	var total float64
+	for _, prop := range propTable {
+		total += prop.Prop
+	}
+
+	p := rand.Float64() * total
 	for _, prop := range propTable {
 		p -= prop.Prop
 		if p <= 0 {
