@@ -201,7 +201,7 @@ func (t *Table) ToSQL() string {
 	for i, col := range t.SelectedColumns {
 		cols[i] = col + " AS c" + strconv.Itoa(i)
 	}
-	return "SELECT " + strings.Join(cols, ", ") + " FROM " + t.Schema.Name()
+	return "SELECT " + strings.Join(cols, ", ") + " FROM " + t.Schema.Name
 }
 
 func (t *Table) Clone() Node {
