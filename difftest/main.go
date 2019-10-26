@@ -91,6 +91,8 @@ func (r *Runner) Run(t util.Tree) {
 			r.errInconsistency.Write([]byte("\n> ACTUAL\n"))
 			r.errInconsistency.Write([]byte(actErr.Error()))
 			r.errInconsistency.Write([]byte("\n"))
+		} else {
+			log.Error(expErr.Error() + "\nSQL: \n" + q)
 		}
 	} else if expErr != nil && actErr == nil {
 		defer actRows.Close()
