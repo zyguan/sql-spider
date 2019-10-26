@@ -21,10 +21,10 @@ func getTableSchemas() util.TableSchemas {
 
 func main() {
 	ts := getTableSchemas()
-	emptyTrees := nodegen.GenerateNode(3)
+	emptyTrees := nodegen.GenerateNode(10)
 	var trees []util.Tree
 	for _, et := range emptyTrees {
-		trees = append(trees, exprgen.GenExprTrees(et, ts, 10)...)
+		trees = append(trees, exprgen.GenExprTrees(et, ts, 3)...)
 	}
 	for _, t := range trees {
 		fmt.Println(t.ToSQL())
