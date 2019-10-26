@@ -172,7 +172,7 @@ func buildExpr(cols []util.Expr, tp util.TypeMask) util.Expr {
 }
 
 func genConstant(tp util.TypeMask) util.Constant {
-	t := rand.Intn(30)
+	t := rand.Intn(35)
 	var ct util.Type
 	var cv string
 	if t < 10 && tp.Contain(util.ETInt) {
@@ -181,9 +181,12 @@ func genConstant(tp util.TypeMask) util.Constant {
 	} else if t < 20 && tp.Contain(util.ETReal) {
 		ct = util.ETReal
 		cv = genRealLiteral()
-	} else {
+	} else if t < 30 && tp.Contain(util.ETString) {
 		ct = util.ETString
 		cv = genStringLiteral()
+	} else {
+		ct = tp.Any()
+		cv = "NULL"
 	}
 	return util.NewConstant(cv, ct)
 }

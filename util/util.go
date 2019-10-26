@@ -14,6 +14,15 @@ func (tm TypeMask) Contain(t Type) bool {
 	return uint(tm)&uint(t) > 0
 }
 
+func (tm TypeMask) Any() Type {
+	for i := uint(0); i < 10; i++ {
+		if tm&TypeMask(i) > 0 {
+			return 1 << i
+		}
+	}
+	panic("??")
+}
+
 const (
 	ETInt Type = 1 << iota
 	ETReal
