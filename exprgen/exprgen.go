@@ -111,7 +111,11 @@ func fillJoin(j *util.Join) {
 }
 
 func fillFilter(f *util.Filter) {
-	f.Where = buildExpr(f.Children()[0].Columns(), util.TypeNumber, util.MustContainCols)
+	cols := make([]util.Expr, 0, len(f.Children()[0].Columns()))
+	for i, c := range f.Children()[0].Columns() {
+		cols = append(cols, util.NewColumn(fmt.Sprintf("c%v", i), c.RetType()))
+	}
+	f.Where = buildExpr(cols, util.TypeNumber, util.MustContainCols)
 }
 
 func buildJoinCond(lCols []util.Expr, rCols []util.Expr) util.Expr {
