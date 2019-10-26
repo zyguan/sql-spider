@@ -4,6 +4,9 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"time"
+	"math/rand"
+	"math"
 )
 
 type Type uint
@@ -562,3 +565,61 @@ type TableSchema struct {
 }
 
 type TableSchemas []TableSchema
+
+
+func GenConstant(tp TypeMask) Constant {
+	if rand.Intn(100) <= 1 {
+		return NewConstant("NULL", tp.Any())
+	}
+
+	var ct Type
+	var cv string
+	tps := tp.All()
+	t := rand.Intn(len(tps))
+	ct = tps[t]
+	switch ct {
+	case ETInt:
+		cv = genIntLiteral()
+	case ETReal, ETDecimal:
+		cv = genRealLiteral()
+	case ETString:
+		cv = genStringLiteral()
+	case ETDatetime:
+		cv = genDateTimeLiteral()
+	default:
+		ct = tp.Any()
+		cv = "NULL"
+	}
+	return NewConstant(cv, ct)
+}
+
+func genDateTimeLiteral() string {
+	t := time.Unix(rand.Int63n(2000000000), rand.Int63n(30000000000))
+	return t.Format("'2006-01-02 15:04:05'")
+}
+
+func genIntLiteral() string {
+	return fmt.Sprintf("%v", int64(float64(math.MaxInt64)*rand.Float64()))
+}
+
+func genRealLiteral() string {
+	//return fmt.Sprintf("%.6f", rand.Float64())
+	base := math.Pow(10, float64(10-rand.Intn(20)))
+	return fmt.Sprintf("%.3f", base*(rand.Float64()-0.5))
+}
+
+func genStringLiteral() string {
+	n := rand.Intn(10) + 1
+	buf := make([]byte, 0, n)
+	for i := 0; i < n; i++ {
+		x := rand.Intn(62)
+		if x < 26 {
+			buf = append(buf, byte('a'+x))
+		} else if x < 52 {
+			buf = append(buf, byte('A'+x-26))
+		} else {
+			buf = append(buf, byte('0'+x-52))
+		}
+	}
+	return "'" + string(buf) + "'"
+}
