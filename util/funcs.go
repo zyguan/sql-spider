@@ -127,8 +127,6 @@ func GenExprFromProbTable(level int) string {
 	return funcList[rand.Intn(len(funcList))]
 }
 
-
-
 type FuncInfo struct {
 	MinArgs   int
 	MaxArgs   int
@@ -150,29 +148,20 @@ func (fi FuncInfo) ArgTypeMask(i int) TypeMask {
 
 var FuncInfos = map[string]FuncInfo{
 	FuncEQ:     {2, 2, nil},
+	FuncGE:     {2, 2, nil},
+	FuncLE:     {2, 2, nil},
+	FuncNE:     {2, 2, nil},
+	FuncLT:     {2, 2, nil},
+	FuncGT:     {2, 2, nil},
 	FuncIsTrue: {1, 1, nil},
-	FuncPow:    {2, 2, []TypeMask{TypeNumber, TypeNumber}},
-	FuncLower:  {1, 1, []TypeMask{TypeMask(ETString)}},
+	FuncIf:     {3, 3, nil},
+	FuncIfnull: {2, 2, nil},
+
+	FuncPow:   {2, 2, []TypeMask{TypeNumber, TypeNumber}},
+	FuncLower: {1, 1, []TypeMask{TypeMask(ETString)}},
 }
 
 //var NumArgs = map[string][]int{
-//	FuncEQ:              {2, 2},
-//	FuncGE:              {2, 2},
-//	FuncLE:              {2, 2},
-//	FuncNE:              {2, 2},
-//	FuncLT:              {2, 2},
-//	FuncGT:              {2, 2},
-//	FuncIsTrue:          {1, 1},
-//	FuncIf:              {3, 3},
-//	FuncIfnull:          {2, 2},
-//	FuncASCII:           {1, 1},
-//	FuncBin:             {1, 1},
-//	FuncConvert:         {2, 2},
-//	FuncExportSet:       {3, 5},
-//	FuncFormat:          {2, 3},
-//	FuncFromBase64:      {1, 1},
-//	FuncInsertFunc:      {4, 4},
-//	FuncInstr:           {2, 2},
 //	FuncLcase:           {1, 1},
 //	FuncLeft:            {2, 2},
 //	FuncRight:           {2, 2},
