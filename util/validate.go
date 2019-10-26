@@ -40,6 +40,24 @@ func Or(v0 ValidateExprFn, vs ...ValidateExprFn) ValidateExprFn {
 	}
 }
 
+func RejectAllConstatns(expr Expr) bool {
+	switch e := expr.(type) {
+	case *Func:
+		allConstants := true
+		for _, arg := range e.children {
+			switch arg.(type) {
+			case *Constant, Constant:
+			default:
+				allConstants = false
+			}
+		}
+		if allConstants {
+			return false
+		}
+	}
+	return true
+}
+
 func MustContainCols(expr Expr) bool {
 	switch e := expr.(type) {
 	case Column, *Column:

@@ -173,7 +173,7 @@ func buildExpr(cols []util.Expr, tp util.TypeMask, validate util.ValidateExprFn)
 				expr.SetRetType(fnSpec.ReturnType)
 				ok := true
 				for i := 0; i < n; i++ {
-					subExpr := gen(lv+1, fnSpec.ArgTypeMask(i, expr.Children()), util.Pass)
+					subExpr := gen(lv+1, fnSpec.ArgTypeMask(i, expr.Children()), util.RejectAllConstatns)
 					if subExpr == nil {
 						ok = false
 						break
