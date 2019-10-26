@@ -53,9 +53,6 @@ func (f *Func) ToSQL() string {
 	}()
 
 	infixFn := func(op string) string {
-		if len(f.children) < 2 {
-			fmt.Println(">>")
-		}
 		return fmt.Sprintf("(%s) %s (%s)", f.children[0].ToSQL(), op, f.children[1].ToSQL())
 	}
 	switch f.Name {
@@ -96,7 +93,7 @@ func (f *Func) ToSQL() string {
 		for i, e := range f.children {
 			args[i] = e.ToSQL()
 		}
-		return strings.ToUpper(f.Name) + "(" + strings.Join(args, ",") + ")"
+		return strings.ToUpper(f.Name) + "(" + strings.Join(args, ", ") + ")"
 	}
 }
 
