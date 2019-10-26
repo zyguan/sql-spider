@@ -74,7 +74,7 @@ func buildExpr(nCols int) util.Expr {
 	gen = func(lv int) util.Expr {
 		switch f := util.GenExprFromProbTable(lv); f {
 		case util.Col:
-			return util.Column("c" + strconv.Itoa(nCols))
+			return util.Column("c" + strconv.Itoa(rand.Intn(nCols)))
 		case util.Const:
 			return util.Constant("'TODO'") // TODO
 		default:
