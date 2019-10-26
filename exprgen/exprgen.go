@@ -219,8 +219,8 @@ func genIntLiteral() string {
 
 func genRealLiteral() string {
 	//return fmt.Sprintf("%.6f", rand.Float64())
-	base := math.Pow(10, float64(30-rand.Intn(60)))
-	return fmt.Sprintf("%.3f", math.MaxInt64*(rand.Float64()-0.5)/base)
+	base := math.Pow(10, float64(10-rand.Intn(20)))
+	return fmt.Sprintf("%.3f", base*(rand.Float64()-0.5))
 }
 
 func genStringLiteral() string {
