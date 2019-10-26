@@ -79,38 +79,34 @@ func buildJoinCond(nLCols, nRCols int) util.Expr {
 func buildExpr(nCols int, tp util.TypeMask) util.Expr {
 	var gen func(lv int, tp util.TypeMask) util.Expr
 	gen = func(lv int, tp util.TypeMask) util.Expr {
-		switch f := util.GenExprFromProbTable(lv); f {
-		case util.Col:
-			return nil // TODO
-			//return util.Column("c" + strconv.Itoa(rand.Intn(nCols)))
-		case util.Const:
-			return nil // TODO
-			//return util.Constant("'xxx'") // TODO
-		default:
-			argsSpec := util.FuncInfos[f]
-			n := argsSpec.MinArgs
-			if argsSpec.MaxArgs > argsSpec.MinArgs {
-				n = rand.Intn(argsSpec.MaxArgs-argsSpec.MinArgs) + argsSpec.MinArgs
-			}
-			expr := &util.Func{Name: f}
-			for i := 0; i < n; i++ {
-				subExpr := gen(lv+1, argsSpec.ArgType(i))
-				if subExpr == nil {
-					return nil
+		count := 10000
+		for count > 0 {
+			count--
+			switch f := util.GenExprFromProbTable(lv); f {
+			case util.Col:
+				return nil // TODO
+				//return util.Column("c" + strconv.Itoa(rand.Intn(nCols)))
+			case util.Const:
+				return nil // TODO
+				//return util.Constant("'xxx'") // TODO
+			default:
+				argsSpec := util.FuncInfos[f]
+				n := argsSpec.MinArgs
+				if argsSpec.MaxArgs > argsSpec.MinArgs {
+					n = rand.Intn(argsSpec.MaxArgs-argsSpec.MinArgs) + argsSpec.MinArgs
 				}
-				expr.AppendArg(subExpr)
+				expr := &util.Func{Name: f}
+				for i := 0; i < n; i++ {
+					subExpr := gen(lv+1, argsSpec.ArgType(i))
+					if subExpr == nil {
+						continue
+					}
+					expr.AppendArg(subExpr)
+				}
+				return expr
 			}
-			return expr
 		}
+		panic("???")
 	}
-
-	count := 10000
-	for count > 0 {
-		expr := gen(0, tp)
-		if expr == nil {
-			return expr
-		}
-		count --
-	}
-	panic("???")
+	return gen(0, tp)
 }
