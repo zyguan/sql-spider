@@ -18,6 +18,7 @@ func createBFSHelper(beginTree Tree, nNneighbours int) *BFSHelper {
 	}
 	bh.fifo.PushBack(beginTree.Clone())
 	bh.results = append(bh.results, beginTree.Clone())
+	bh.states[beginTree.ToBeautySQL(0)] = 0
 	return bh
 }
 
@@ -47,8 +48,14 @@ func (bh *BFSHelper) transform(root, node Node, path []int) {
 				}
 				p.(*Filter).Where = where
 				
+				state := tree.ToBeautySQL(0)
+				if _, ok := bh.states[state]; ok {
+					continue
+				}
+
 				bh.fifo.PushBack(tree)
 				bh.results = append(bh.results, tree)
+				bh.states[tree.ToBeautySQL(0)] = len(path) + 1
 				if len(bh.results) >= bh.nNneighbours {
 					return
 				}
