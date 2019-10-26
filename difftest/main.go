@@ -54,9 +54,9 @@ func main() {
 	}
 
 	r := Runner{mydb: mydb, tidb: tidb}
-	r.outMySQLErr, err = os.OpenFile("mysql_err.out", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
+	r.errInconsistency, err = os.OpenFile("err_diff.out", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
 	perror(err)
-	r.outInconsistencyErr, err = os.OpenFile("tidb_err.out", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
+	r.outInconsistency, err = os.OpenFile("out_diff.out", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
 	perror(err)
 
 	for _, t := range trees {
@@ -71,8 +71,8 @@ func perror(err error) {
 }
 
 type Runner struct {
-	outMySQLErr         io.Writer
-	outInconsistencyErr io.Writer
+	errInconsistency io.Writer
+	outInconsistency io.Writer
 
 	mydb *sql.DB
 	tidb *sql.DB
@@ -80,49 +80,61 @@ type Runner struct {
 
 func (r *Runner) Run(t util.Tree) {
 	q := t.ToBeautySQL(0)
-	rs, err := r.mydb.Query(q)
-	if err != nil {
-		r.outMySQLErr.Write([]byte("========================================\n> ERR\n"))
-		r.outMySQLErr.Write([]byte(err.Error()))
-		r.outMySQLErr.Write([]byte("\n> SQL\n"))
-		r.outMySQLErr.Write([]byte(q))
-		r.outMySQLErr.Write([]byte("\n"))
-		return
-	}
-	defer rs.Close()
-
-	expRows, err := dumpToByteRows(rs)
-	if err != nil {
-		log.Error("fail to dump mysql result")
-		return
-	}
-
-	rs, err = r.tidb.Query(q)
-	if err != nil {
-		r.outInconsistencyErr.Write([]byte("========================================\n> ERR\n"))
-		r.outInconsistencyErr.Write([]byte(err.Error()))
-		r.outInconsistencyErr.Write([]byte("\n> SQL\n"))
-		r.outInconsistencyErr.Write([]byte(q))
-		r.outInconsistencyErr.Write([]byte("\n"))
-		return
-	}
-	defer rs.Close()
-
-	actRows, err := dumpToByteRows(rs)
-	if err != nil {
-		log.Error("failed to dump tidb result")
-		return
-	}
-
-	exp, act := expRows.convertToString(), actRows.convertToString()
-
-	if exp != act {
-		r.outInconsistencyErr.Write([]byte("========================================\n> EXPEACT\n"))
-		r.outInconsistencyErr.Write([]byte(exp))
-		r.outInconsistencyErr.Write([]byte("\n> ACTUAL\n"))
-		r.outInconsistencyErr.Write([]byte(act))
-		r.outInconsistencyErr.Write([]byte("\n"))
-		return
+	expRows, expErr := r.mydb.Query(q)
+	actRows, actErr := r.tidb.Query(q)
+	if expErr != nil && actErr != nil {
+		if expErr.Error() != actErr.Error() {
+			r.errInconsistency.Write([]byte("========================================\n> SQL\n"))
+			r.errInconsistency.Write([]byte(q))
+			r.errInconsistency.Write([]byte("\n> EXPECT\n"))
+			r.errInconsistency.Write([]byte(expErr.Error()))
+			r.errInconsistency.Write([]byte("\n> ACTUAL\n"))
+			r.errInconsistency.Write([]byte(actErr.Error()))
+			r.errInconsistency.Write([]byte("\n"))
+		}
+	} else if expErr != nil && actErr == nil {
+		defer actRows.Close()
+		r.errInconsistency.Write([]byte("========================================\n> SQL\n"))
+		r.errInconsistency.Write([]byte(q))
+		r.errInconsistency.Write([]byte("\n> EXPECT\n"))
+		r.errInconsistency.Write([]byte(expErr.Error()))
+		r.errInconsistency.Write([]byte("\n> ACTUAL\n"))
+		r.errInconsistency.Write([]byte("NO ERROR"))
+		r.errInconsistency.Write([]byte("\n"))
+	} else if expErr == nil && actErr != nil {
+		defer expRows.Close()
+		expBR, err := dumpToByteRows(expRows)
+		if err != nil {
+			log.Error(err)
+		}
+		r.outInconsistency.Write([]byte("========================================\n> SQL\n"))
+		r.outInconsistency.Write([]byte(q))
+		r.outInconsistency.Write([]byte("\n> EXPECT\n"))
+		r.outInconsistency.Write([]byte(expBR.convertToString()))
+		r.outInconsistency.Write([]byte("\n> ACTUAL\n"))
+		r.outInconsistency.Write([]byte(actErr.Error()))
+		r.outInconsistency.Write([]byte("\n"))
+		expRows.Close()
+	} else {
+		defer expRows.Close()
+		defer actRows.Close()
+		expBR, err := dumpToByteRows(expRows)
+		if err != nil {
+			log.Error(err)
+		}
+		actBR, err := dumpToByteRows(actRows)
+		if err != nil {
+			log.Error(err)
+		}
+		if expBR.convertToString() != actBR.convertToString() {
+			r.outInconsistency.Write([]byte("========================================\n> SQL\n"))
+			r.outInconsistency.Write([]byte(q))
+			r.outInconsistency.Write([]byte("\n> EXPECT\n"))
+			r.outInconsistency.Write([]byte(expBR.convertToString()))
+			r.outInconsistency.Write([]byte("\n> ACTUAL\n"))
+			r.outInconsistency.Write([]byte(actBR.convertToString()))
+			r.outInconsistency.Write([]byte("\n"))
+		}
 	}
 }
 
