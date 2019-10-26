@@ -5,6 +5,7 @@ import (
 	"math"
 	"math/rand"
 	"strconv"
+	"time"
 
 	"github.com/zyguan/sqlgen/util"
 )
@@ -179,19 +180,23 @@ func genConstant(tp util.TypeMask) util.Constant {
 		switch ct {
 		case util.ETInt:
 			cv = genIntLiteral()
-		case util.ETReal:
+		case util.ETReal, util.ETDecimal:
 			cv = genRealLiteral()
 		case util.ETString:
 			cv = genStringLiteral()
-		case util.ETTimestamp:
-		case util.ETDuration:
 		case util.ETDatetime:
+			cv = genDateTimeLiteral()
 		default:
 			ct = tp.Any()
 			cv = "NULL"
 		}
 	}
 	return util.NewConstant(cv, ct)
+}
+
+func genDateTimeLiteral() string {
+	t := time.Unix(rand.Int63n(2000000000), rand.Int63n(30000000000))
+	return t.Format("2006-01-02 15:04:05")
 }
 
 func genIntLiteral() string {
