@@ -24,6 +24,7 @@ func randomGenNode(level int) util.Node {
 		{&util.Projector{}, 0.2 - 0.1*float64(level)},
 		{&util.Filter{}, 0.2 + 0.15*float64(level)},
 		{&util.Table{}, 0.1 + 0.15*float64(level)},
+		{&util.Limit{}, 0.3 - 0.1*float64(level)},
 		{&util.OrderBy{}, 0.3 - 0.1*float64(level)},
 	}
 
@@ -64,6 +65,10 @@ func (rn *RandomNodeGenerator) Generate(level int) util.Node {
 		join := node.(*util.Join)
 		join.AddChild(rn.Generate(level + 1))
 		join.AddChild(rn.Generate(level + 1))
+		break
+	case *util.Limit:
+		limit := node.(*util.Limit)
+		limit.AddChild(rn.Generate(level + 1))
 		break
 	}
 	return node
