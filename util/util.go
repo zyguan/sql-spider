@@ -456,9 +456,13 @@ func (a *Agg) ToBeautySQL(level int) string {
 	for _, e := range a.GroupByExprs {
 		groupBy = append(groupBy, e.ToSQL())
 	}
+	groupBySQL := "GROUP BY " + strings.Join(groupBy, ", ")
+	if len(groupBy) == 0 {
+		groupBySQL = ""
+	}
 	return strings.Repeat(" ", level) + "SELECT " + strings.Join(aggs, ", ") + " FROM (\n" +
 		a.children[0].ToBeautySQL(level+1) + "\n" +
-		strings.Repeat(" ", level) + ") GROUP BY " + strings.Join(groupBy, ", ")
+		strings.Repeat(" ", level) + ") " + groupBySQL
 }
 
 func (a *Agg) Clone() Node {
