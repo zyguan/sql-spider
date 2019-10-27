@@ -5,8 +5,10 @@ import (
 	"database/sql"
 	"flag"
 	"io"
+	"math"
 	"math/rand"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -149,8 +151,9 @@ type byteRow struct {
 }
 
 type byteRows struct {
-	cols []string
-	data []byteRow
+	types []*sql.ColumnType
+	cols  []string
+	data  []byteRow
 }
 
 func (rows *byteRows) Len() int {
@@ -220,7 +223,55 @@ func dumpToByteRows(rows *sql.Rows) (*byteRows, error) {
 		return nil, err
 	}
 
-	return &byteRows{cols: cols, data: data}, nil
+	types, err := rows.ColumnTypes()
+	if err != nil {
+		return nil, err
+	}
+
+	return &byteRows{cols: cols, data: data, types: types}, nil
+}
+
+func compareByteRows(rs1, rs2 *byteRows) bool {
+	n1 := len(rs1.data)
+	n2 := len(rs2.data)
+	if n1 != n2 {
+		return false
+	}
+	for i := 0; i < n1; i++ {
+		for j, c := range rs1.types {
+			if rs1.data[i].data[j] == nil && rs2.data[i].data[j] == nil {
+				continue
+			}
+			if rs1.data[i].data[j] == nil || rs2.data[i].data[j] == nil {
+				return false
+			}
+
+			v1 := string(rs1.data[i].data[j])
+			v2 := string(rs2.data[i].data[j])
+			typeName := c.DatabaseTypeName()
+			if typeName == "DECIMAL" ||
+				typeName == "FLOAT" ||
+				typeName == "DOUBLE" {
+				f1, err := strconv.ParseFloat(v1, 10)
+				if err != nil {
+					panic(err)
+				}
+				f2, err := strconv.ParseFloat(v2, 10)
+				if err != nil {
+					panic(err)
+				}
+				if math.Abs(f1-f2) < 0.0001 || math.Abs((f1-f2)/(f1+f2)) < 0.001 {
+					continue
+				}
+				return false
+			} else {
+				if v1 != v2 {
+					return false
+				}
+			}
+		}
+	}
+	return true
 }
 
 func init() {
