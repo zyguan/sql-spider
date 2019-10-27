@@ -43,7 +43,7 @@ SELECT * FROM (  SELECT SIN(IFNULL(c0, DAYOFWEEK('1999-12-01 12:50:06'))) AS c0 
   
 MySQL 返回空结果无报错，TiDB panic；
 
-定位后发现是处理 LogicalOr 改写逻辑有问题， 导致子表达式没有被赋值，出现空指针；
+定位后发现是处理 c0 OR WEEKOFYEAR('2017-04-18 19:15:51') 改写逻辑有问题， 导致子表达式没有被赋值，出现空指针；
 
 
 case 4 <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
@@ -72,3 +72,42 @@ SELECT count(*) from t t1, t t2 where t1.col_string != t2.col_datetime;
 TiDB 返回 0，MySQL 返回 8184；
 
 应该是计算 Hash 时 Join Key 计算结果有误， 导致 Join 不上；
+
+
+case 6 <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+SELECT * FROM ( SELECT c0, c1, MIN(c2) AS c2, MIN(c3) AS c3 FROM (
+SELECT * FROM (  SELECT c0, c1, c2, AVG(c3) AS c3 FROM (
+   SELECT col_int AS c0, col_double AS c1, col_decimal AS c2, col_datetime AS c3 FROM t
+  ) AS t GROUP BY c0, c1, c2) t WHERE FLOOR((LN(IF(c1, -0.000, (c1 ^ COS(c2)))) < c2))
+ ) AS t GROUP BY c0, c1) t ORDER BY c0, c1, c2, c3
+ 
+MySQL 无结果， TiDB 输出 41 行；
+
+定位后原因在于 IF(c1, -0.000, (c1 ^ COS(c2)) 结果和 MySQL 不一致，主要为 IF 的第一个参数为浮点数时有问题；
+
+
+case 7 <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+SELECT * FROM (SELECT * FROM ( SELECT AVG(c0) AS c0 FROM (
+  SELECT (c0 >= UPPER(REPEAT(UCASE(LOWER('UebLHwFSV')), ATAN(IFNULL(13.498, IF(0.000, '2026-08-14 10:51:21', c0)))))) AS c0 FROM (
+   SELECT col_string AS c0 FROM t
+  ) AS t
+ ) AS t ) t WHERE CEIL(c0)) t ORDER BY c0
+ 
+MySQL 返回 0.2473，TiDB 返回 1.0000;
+
+定位是 c0 和 UPPER(...) 字符串比较有 corner case 结果和 MySQL 不一致，具体原因还在查；
+
+
+case 8 <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+SELECT * FROM ( SELECT c0, AVG(c1) AS c1 FROM (
+SELECT * FROM (  SELECT c0, MIN(c1) AS c1 FROM (
+   SELECT col_int AS c0, col_double AS c1 FROM t
+  ) AS t GROUP BY c0) t WHERE ABS(c1)
+ ) AS t GROUP BY c0) t ORDER BY c0, c1
+
+MySQL 返回 2 行，TiDB 返回 0 行；
+
+定位是 c1 是 double 类型，在 TiDB 中把 ABS(c1) 作为 WHERE 条件进行 bool 判断时出错；
