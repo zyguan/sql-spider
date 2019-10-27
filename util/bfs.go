@@ -3,6 +3,7 @@ package util
 import (
 	"container/list"
 	"math/rand"
+	"fmt"
 )
 
 type BFSHelper struct {
@@ -77,7 +78,10 @@ func (bh *BFSHelper) transform(root, node Node, path []int) {
 					ctx.Cols = append(ctx.Cols, child.Columns()...)
 				}
 				ctx.ReplaceChildIdx = rand.Intn(len(t.children))
+				fmt.Printf("Col size;%d replace id:%d\n", len(ctx.Cols), ctx.ReplaceChildIdx)
+				fmt.Printf("origin expr:%s\n", expr.ToSQL())
 				exprs := r.OneStep(expr, ctx)
+				fmt.Printf("transform res:%d\n", len(exprs))
 				for _, proj := range exprs {
 					tree := root.Clone()
 					p := tree
