@@ -134,7 +134,7 @@ func (r *Runner) Run(t util.Tree) {
 			log.Error(err)
 			return
 		}
-		if expBR.convertToString() != actBR.convertToString() {
+		if !compareByteRows(expBR, actBR) {
 			r.outInconsistency.Write([]byte("========================================\n> SQL\n"))
 			r.outInconsistency.Write([]byte(q))
 			r.outInconsistency.Write([]byte("\n> EXPECT\n"))
