@@ -140,7 +140,10 @@ func GenExprFromProbTable(tp TypeMask, level int) string {
 	} else if r < 0.2 {
 		return Const
 	}
+	return GenFuncFromPropTable(tp)
+}
 
+func GenFuncFromPropTable(tp TypeMask) string {
 	count := 0
 	for count < 1000 {
 		count++
@@ -151,9 +154,9 @@ func GenExprFromProbTable(tp TypeMask, level int) string {
 		}
 		return fname
 	}
-
 	panic("???")
 }
+
 
 type FuncInfo struct {
 	Name       string
