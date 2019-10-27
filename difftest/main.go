@@ -12,12 +12,17 @@ import (
 	"strings"
 	"time"
 
-	_ "github.com/go-sql-driver/mysql"
+	"github.com/go-sql-driver/mysql"
 	"github.com/ngaut/log"
-	"github.com/zyguan/sqlgen/exprgen"
-	"github.com/zyguan/sqlgen/nodegen"
-	"github.com/zyguan/sqlgen/util"
+	"github.com/zyguan/sql-spider/exprgen"
+	"github.com/zyguan/sql-spider/nodegen"
+	"github.com/zyguan/sql-spider/util"
 )
+
+var cntErrMismatch = 0
+var cntErrNotReported = 0
+var cntErrUnexpected = 0
+var cntContentMismatch = 0
 
 func getTableSchemas() util.TableSchemas {
 	return util.TableSchemas{
@@ -63,9 +68,11 @@ func main() {
 	r.outInconsistency, err = os.OpenFile("out_diff.out", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
 	perror(err)
 
+	t := time.Now()
 	for _, t := range trees {
 		r.Run(t)
 	}
+	log.Infof("%v %d %D %d", time.Now().Sub(t), cntErrMismatch, cntErrNotReported, cntErrUnexpected)
 }
 
 func perror(err error) {
@@ -88,6 +95,9 @@ func (r *Runner) Run(t util.Tree) {
 	actRows, actErr := r.tidb.Query(q)
 	if expErr != nil && actErr != nil {
 		if expErr.Error() != actErr.Error() {
+			if expErr.(*mysql.MySQLError).Number != actErr.(*mysql.MySQLError).Number {
+				cntErrMismatch += 1
+			}
 			r.errInconsistency.Write([]byte("========================================\n> SQL\n"))
 			r.errInconsistency.Write([]byte(q))
 			r.errInconsistency.Write([]byte("\n> EXPECT\n"))
@@ -99,6 +109,7 @@ func (r *Runner) Run(t util.Tree) {
 			log.Error(expErr.Error() + "\nSQL: \n" + q)
 		}
 	} else if expErr != nil && actErr == nil {
+		cntErrNotReported += 1
 		defer actRows.Close()
 		r.errInconsistency.Write([]byte("========================================\n> SQL\n"))
 		r.errInconsistency.Write([]byte(q))
@@ -108,6 +119,7 @@ func (r *Runner) Run(t util.Tree) {
 		r.errInconsistency.Write([]byte("NO ERROR"))
 		r.errInconsistency.Write([]byte("\n"))
 	} else if expErr == nil && actErr != nil {
+		cntErrUnexpected += 1
 		defer expRows.Close()
 		expBR, err := dumpToByteRows(expRows)
 		if err != nil {
@@ -135,6 +147,7 @@ func (r *Runner) Run(t util.Tree) {
 			return
 		}
 		if !compareByteRows(expBR, actBR) {
+			cntContentMismatch += 1
 			r.outInconsistency.Write([]byte("========================================\n> SQL\n"))
 			r.outInconsistency.Write([]byte(q))
 			r.outInconsistency.Write([]byte("\n> EXPECT\n"))
@@ -199,6 +212,12 @@ func (rows *byteRows) convertToString() string {
 }
 
 func dumpToByteRows(rows *sql.Rows) (*byteRows, error) {
+
+	types, err := rows.ColumnTypes()
+	if err != nil {
+		return nil, err
+	}
+
 	cols, err := rows.Columns()
 	if err != nil {
 		return nil, err
@@ -219,11 +238,6 @@ func dumpToByteRows(rows *sql.Rows) (*byteRows, error) {
 		data = append(data, byteRow{tmp})
 	}
 	err = rows.Err()
-	if err != nil {
-		return nil, err
-	}
-
-	types, err := rows.ColumnTypes()
 	if err != nil {
 		return nil, err
 	}
