@@ -5,9 +5,9 @@ import (
 	"math/rand"
 	"time"
 
-	"github.com/zyguan/sqlgen/exprgen"
-	"github.com/zyguan/sqlgen/nodegen"
-	"github.com/zyguan/sqlgen/util"
+	"github.com/zyguan/sql-spider/util"
+	"github.com/zyguan/sql-spider/nodegen"
+	"github.com/zyguan/sql-spider/exprgen"
 )
 
 func getTableSchemas() util.TableSchemas {

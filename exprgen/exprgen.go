@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"math/rand"
 	"strconv"
-	"github.com/zyguan/sqlgen/util"
+	"github.com/zyguan/sql-spider/util"
 )
 
 func GenExprTrees(tree util.Tree, ts util.TableSchemas, n int) []util.Tree {
