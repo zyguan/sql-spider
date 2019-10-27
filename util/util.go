@@ -7,6 +7,7 @@ import (
 	"time"
 	"math/rand"
 	"math"
+	"github.com/zyguan/sqlgen/util"
 )
 
 type Type uint
@@ -622,4 +623,66 @@ func genStringLiteral() string {
 		}
 	}
 	return "'" + string(buf) + "'"
+}
+
+func GenExpr(cols []Expr, tp TypeMask, validate ValidateExprFn) Expr {
+	var gen func(lv int, tp TypeMask, validate ValidateExprFn) Expr
+	gen = func(lv int, tp TypeMask, validate ValidateExprFn) Expr {
+		count := 10000
+		for count > 0 {
+			count--
+			switch f := GenExprFromProbTable(tp, lv); f {
+			case util.Col:
+				cc := make([]Expr, 0, len(cols))
+				for _, col := range cols {
+					if tp.Contain(col.RetType()) {
+						cc = append(cc, col)
+					}
+				}
+				if len(cc) == 0 {
+					continue
+				}
+				expr := cc[rand.Intn(len(cc))]
+				if !validate(expr) {
+					continue
+				}
+				return expr
+			case util.Const:
+				expr := GenConstant(tp)
+				if !validate(expr) {
+					continue
+				}
+				return expr
+			default:
+				fnSpec := FuncInfos[f]
+				n := fnSpec.MinArgs
+				if fnSpec.MaxArgs > fnSpec.MinArgs {
+					n = rand.Intn(fnSpec.MaxArgs-fnSpec.MinArgs) + fnSpec.MinArgs
+				}
+				expr := &Func{Name: f}
+				expr.SetRetType(fnSpec.ReturnType)
+				ok := true
+				for i := 0; i < n; i++ {
+					subExpr := gen(lv+1, fnSpec.ArgTypeMask(i, expr.Children()), RejectAllConstatns)
+					if subExpr == nil {
+						ok = false
+						break
+					}
+					expr.AppendArg(subExpr)
+				}
+				if !ok {
+					continue
+				}
+				if lv == 0 && !validate(expr) {
+					continue
+				}
+				if fnSpec.Validate != nil && !fnSpec.Validate(expr) {
+					continue
+				}
+				return expr
+			}
+		}
+		panic("???")
+	}
+	return gen(0, tp, validate)
 }

@@ -74,16 +74,39 @@ func (r *ReplaceChildToColumn) OneStep(node Expr, ctx TransformContext) []Expr {
 		if len(e.children) > ctx.ReplaceChildIdx {
 			newNode := e.Clone().(*Func)
 			newNode.children[ctx.ReplaceChildIdx] = ctx.Cols[rand.Intn(len(ctx.Cols))]
+			fmt.Printf("old child:%s new child:%s\n", e.children[ctx.ReplaceChildIdx].ToSQL(), newNode.children[ctx.ReplaceChildIdx].ToSQL())
 			result = append(result, newNode)
 		}
 	}
 	return result
 }
+
+
+type ReplaceChildToFunc struct {}
+
+func (r *ReplaceChildToFunc) OneStep(node Expr, ctx TransformContext) []Expr {
+	var result []Expr
+	switch e := node.(type) {
+	case *Constant:
+	case *Column:
+	case *Func:
+		if len(e.children) > ctx.ReplaceChildIdx {
+			fmt.Printf("ReplaceChildToFunc child size:%d id:%d\n", len(e.children), ctx.ReplaceChildIdx)
+			fmt.Printf("node:%s\n", node.ToSQL())
+			newNode := node.Clone().(*Func)
+			newNode.children[ctx.ReplaceChildIdx] = GenExpr(e.children, TypeMask(e.children[ctx.ReplaceChildIdx].RetType()), MustContainCols)
+			result = append(result, newNode)
+		}
+	}
+	return result
+}
+
 func init() {
 	rules = []TransformRule{
 		&ConstantToColumn{},
 		&ColumnToConstant{},
 		&ReplaceChildToConstant{},
 		&ReplaceChildToColumn{},
+		&ReplaceChildToFunc{},
 	}
 }

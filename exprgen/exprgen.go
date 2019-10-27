@@ -79,7 +79,7 @@ func fillProj(p *util.Projector) {
 	}
 	p.Projections = make([]util.Expr, nProjected)
 	for i := 0; i < nProjected; i++ {
-		p.Projections[i] = buildExpr(cols, util.TypeDefault, util.MustContainCols)
+		p.Projections[i] = util.GenExpr(cols, util.TypeDefault, util.MustContainCols)
 	}
 }
 
@@ -112,7 +112,7 @@ func fillFilter(f *util.Filter) {
 	for i, c := range f.Children()[0].Columns() {
 		cols = append(cols, util.NewColumn(fmt.Sprintf("c%v", i), c.RetType()))
 	}
-	f.Where = buildExpr(cols, util.TypeNumber, util.MustContainCols)
+	f.Where = util.GenExpr(cols, util.TypeNumber, util.MustContainCols)
 }
 
 func buildJoinCond(lCols []util.Expr, rCols []util.Expr) util.Expr {
@@ -135,67 +135,5 @@ func genJoinFunc() *util.Func {
 	return &util.Func{
 		Name: allowFuncName[rand.Intn(len(allowFuncName))],
 	}
-}
-
-func buildExpr(cols []util.Expr, tp util.TypeMask, validate util.ValidateExprFn) util.Expr {
-	var gen func(lv int, tp util.TypeMask, validate util.ValidateExprFn) util.Expr
-	gen = func(lv int, tp util.TypeMask, validate util.ValidateExprFn) util.Expr {
-		count := 10000
-		for count > 0 {
-			count--
-			switch f := util.GenExprFromProbTable(tp, lv); f {
-			case util.Col:
-				cc := make([]util.Expr, 0, len(cols))
-				for _, col := range cols {
-					if tp.Contain(col.RetType()) {
-						cc = append(cc, col)
-					}
-				}
-				if len(cc) == 0 {
-					continue
-				}
-				expr := cc[rand.Intn(len(cc))]
-				if !validate(expr) {
-					continue
-				}
-				return expr
-			case util.Const:
-				expr := util.GenConstant(tp)
-				if !validate(expr) {
-					continue
-				}
-				return expr
-			default:
-				fnSpec := util.FuncInfos[f]
-				n := fnSpec.MinArgs
-				if fnSpec.MaxArgs > fnSpec.MinArgs {
-					n = rand.Intn(fnSpec.MaxArgs-fnSpec.MinArgs) + fnSpec.MinArgs
-				}
-				expr := &util.Func{Name: f}
-				expr.SetRetType(fnSpec.ReturnType)
-				ok := true
-				for i := 0; i < n; i++ {
-					subExpr := gen(lv+1, fnSpec.ArgTypeMask(i, expr.Children()), util.RejectAllConstatns)
-					if subExpr == nil {
-						ok = false
-						break
-					}
-					expr.AppendArg(subExpr)
-				}
-				if !ok {
-					continue
-				}
-				if lv == 0 && !validate(expr) {
-					continue
-				}
-				if fnSpec.Validate != nil && !fnSpec.Validate(expr) {
-					continue
-				}
-				return expr
-			}
-		}
-		panic("???")
-	}
-	return gen(0, tp, validate)
 }
 
