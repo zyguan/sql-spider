@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/zyguan/sqlgen/util"
+	"github.com/zyguan/sql-spider/util"
 )
 
 func genCase1() util.Tree {

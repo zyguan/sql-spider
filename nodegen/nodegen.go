@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"math/rand"
 
-	"github.com/zyguan/sqlgen/util"
+	"github.com/zyguan/sql-spider/util"
 )
 
 
