@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 	"testing"
-	"github.com/zyguan/sqlgen/util"
+	"github.com/zyguan/sql-spider/util"
 )
 
 func TestGenCase1(t *testing.T) {
