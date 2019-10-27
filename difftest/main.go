@@ -7,7 +7,6 @@ import (
 	"flag"
 	"io"
 	"math"
-	"math/rand"
 	"os"
 	"strconv"
 	"strings"
@@ -75,7 +74,7 @@ func main() {
 		log.Info("#", i)
 		r.Run(t)
 	}
-	log.Infof("%v %d %d %d", time.Now().Sub(t), cntErrMismatch, cntErrNotReported, cntErrUnexpected)
+	log.Infof("%v %d %d %d %d", time.Now().Sub(t), cntErrMismatch, cntErrNotReported, cntErrUnexpected, cntContentMismatch)
 }
 
 func perror(err error) {
@@ -104,6 +103,7 @@ func (r *Runner) Run(t util.Tree) {
 			e1, ok1 := expErr.(*mysql.MySQLError)
 			e2, ok2 := actErr.(*mysql.MySQLError)
 			if ok1 && ok2 && e1.Number != e2.Number {
+				log.Error(e1, "<>", e2)
 				cntErrMismatch += 1
 			}
 			r.errInconsistency.Write([]byte("========================================\n> SQL\n"))
@@ -118,6 +118,7 @@ func (r *Runner) Run(t util.Tree) {
 		}
 	} else if expErr != nil && actErr == nil {
 		cntErrNotReported += 1
+		log.Error(expErr)
 		defer actRows.Close()
 		r.errInconsistency.Write([]byte("========================================\n> SQL\n"))
 		r.errInconsistency.Write([]byte(q))
@@ -128,6 +129,7 @@ func (r *Runner) Run(t util.Tree) {
 		r.errInconsistency.Write([]byte("\n"))
 	} else if expErr == nil && actErr != nil {
 		cntErrUnexpected += 1
+		log.Error(actErr)
 		defer expRows.Close()
 		expBR, err := dumpToByteRows(expRows)
 		if err != nil {
@@ -297,5 +299,5 @@ func compareByteRows(rs1, rs2 *byteRows) bool {
 }
 
 func init() {
-	rand.Seed(time.Now().UnixNano())
+	//rand.Seed(time.Now().UnixNano())
 }
