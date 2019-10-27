@@ -2,12 +2,11 @@ package util
 
 import (
 	"fmt"
+	"math"
+	"math/rand"
 	"strconv"
 	"strings"
 	"time"
-	"math/rand"
-	"math"
-	"github.com/zyguan/sqlgen/util"
 )
 
 type Type uint
@@ -567,7 +566,6 @@ type TableSchema struct {
 
 type TableSchemas []TableSchema
 
-
 func GenConstant(tp TypeMask) Constant {
 	if rand.Intn(100) <= 1 {
 		return NewConstant("NULL", tp.Any())
@@ -632,7 +630,7 @@ func GenExpr(cols []Expr, tp TypeMask, validate ValidateExprFn) Expr {
 		for count > 0 {
 			count--
 			switch f := GenExprFromProbTable(tp, lv); f {
-			case util.Col:
+			case Col:
 				cc := make([]Expr, 0, len(cols))
 				for _, col := range cols {
 					if tp.Contain(col.RetType()) {
@@ -647,7 +645,7 @@ func GenExpr(cols []Expr, tp TypeMask, validate ValidateExprFn) Expr {
 					continue
 				}
 				return expr
-			case util.Const:
+			case Const:
 				expr := GenConstant(tp)
 				if !validate(expr) {
 					continue
