@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"database/sql"
 	"flag"
 	"io"
@@ -69,10 +70,12 @@ func main() {
 	perror(err)
 
 	t := time.Now()
-	for _, t := range trees {
+
+	for i, t := range trees {
+		log.Info("#", i)
 		r.Run(t)
 	}
-	log.Infof("%v %d %D %d", time.Now().Sub(t), cntErrMismatch, cntErrNotReported, cntErrUnexpected)
+	log.Infof("%v %d %d %d", time.Now().Sub(t), cntErrMismatch, cntErrNotReported, cntErrUnexpected)
 }
 
 func perror(err error) {
@@ -91,11 +94,16 @@ type Runner struct {
 
 func (r *Runner) Run(t util.Tree) {
 	q := t.ToBeautySQL(0)
-	expRows, expErr := r.mydb.Query(q)
-	actRows, actErr := r.tidb.Query(q)
+	ctx := context.Background()
+	ctx1, _ := context.WithTimeout(ctx, 10*time.Second)
+	expRows, expErr := r.mydb.QueryContext(ctx1, q)
+	ctx2, _ := context.WithTimeout(ctx, 10*time.Second)
+	actRows, actErr := r.tidb.QueryContext(ctx2, q)
 	if expErr != nil && actErr != nil {
 		if expErr.Error() != actErr.Error() {
-			if expErr.(*mysql.MySQLError).Number != actErr.(*mysql.MySQLError).Number {
+			e1, ok1 := expErr.(*mysql.MySQLError)
+			e2, ok2 := actErr.(*mysql.MySQLError)
+			if ok1 && ok2 && e1.Number != e2.Number {
 				cntErrMismatch += 1
 			}
 			r.errInconsistency.Write([]byte("========================================\n> SQL\n"))
