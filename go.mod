@@ -1,4 +1,4 @@
-module github.com/zyguan/sqlgen
+module github.com/zyguan/sql-spider
 
 go 1.13
 
