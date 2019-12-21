@@ -40,7 +40,7 @@ func Or(v0 ValidateExprFn, vs ...ValidateExprFn) ValidateExprFn {
 	}
 }
 
-func RejectAllConstatns(expr Expr) bool {
+func RejectAllConstants(expr Expr) bool {
 	switch e := expr.(type) {
 	case *Func:
 		allConstants := true

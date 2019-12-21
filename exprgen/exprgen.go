@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math/rand"
 	"strconv"
+
 	"github.com/zyguan/sql-spider/util"
 )
 
@@ -11,7 +12,7 @@ func GenExprTrees(tree util.Tree, ts util.TableSchemas, n int) []util.Tree {
 	defer func() {
 		if r := recover(); r != nil {
 			fmt.Println("==================================")
-			fmt.Println(tree.ToString())
+			fmt.Println(tree.String())
 			fmt.Println("==================================")
 			panic("???")
 		}
@@ -136,4 +137,3 @@ func genJoinFunc() *util.Func {
 		Name: allowFuncName[rand.Intn(len(allowFuncName))],
 	}
 }
-

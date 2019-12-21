@@ -1,6 +1,8 @@
 package util
 
 import (
+	"encoding/json"
+	"errors"
 	"fmt"
 	"math"
 	"math/rand"
@@ -10,6 +12,59 @@ import (
 )
 
 type Type uint
+
+func (t Type) String() string {
+	switch t {
+	case ETInt:
+		return "INT"
+	case ETReal:
+		return "REAL"
+	case ETDecimal:
+		return "DECIMAL"
+	case ETString:
+		return "STRING"
+	case ETDatetime:
+		return "DATETIME"
+	case ETTimestamp:
+		return "TIMESTAMP"
+	case ETDuration:
+		return "DURATION"
+	case ETJson:
+		return "JSON"
+	default:
+		return "<UNKNOWN_TYPE>"
+	}
+}
+
+func (t *Type) UnmarshalJSON(bs []byte) error {
+	var s string
+	if err := json.Unmarshal(bs, &s); err != nil {
+		return err
+	}
+	var v Type
+	switch strings.ToUpper(s) {
+	case "INT":
+		v = ETInt
+	case "REAL":
+		v = ETReal
+	case "DECIMAL":
+		v = ETDecimal
+	case "STRING":
+		v = ETString
+	case "DATETIME":
+		v = ETDatetime
+	case "TIMESTAMP":
+		v = ETTimestamp
+	case "DURATION":
+		v = ETDuration
+	case "JSON":
+		v = ETJson
+	default:
+		return errors.New("unknown type: " + s)
+	}
+	*t = v
+	return nil
+}
 
 type TypeMask uint
 
@@ -62,6 +117,16 @@ type Expr interface {
 	Children() []Expr
 	Clone() Expr
 	RetType() Type
+}
+
+type Param interface {
+	Value() string
+	RetType() Type
+}
+
+type ParametricExpr interface {
+	Expr
+	Parameterize(choices []bool, params []Param) (Expr, []bool, []Param)
 }
 
 type Func struct {
@@ -163,6 +228,19 @@ func (f *Func) RetType() Type {
 	return f.retType
 }
 
+func (f *Func) Parameterize(choices []bool, params []Param) (Expr, []bool, []Param) {
+	e := f.Clone().(*Func)
+	for i, c := range f.children {
+		if len(choices) == 0 {
+			break
+		}
+		if p, ok := c.(ParametricExpr); ok {
+			e.children[i], choices, params = p.Parameterize(choices, params)
+		}
+	}
+	return e, choices, params
+}
+
 type Constant struct {
 	val     string
 	retType Type
@@ -172,20 +250,28 @@ func NewConstant(val string, retType Type) Constant {
 	return Constant{val, retType}
 }
 
-func (c Constant) Children() []Expr {
-	return nil
+func (c Constant) Children() []Expr { return nil }
+
+func (c Constant) ToSQL() string { return c.val }
+
+func (c Constant) Clone() Expr { return Constant{c.val, c.retType} }
+
+func (c Constant) RetType() Type { return c.retType }
+
+func (c Constant) Value() string { return c.val }
+
+func (c Constant) Parameterize(choices []bool, params []Param) (Expr, []bool, []Param) {
+	if len(choices) == 0 {
+		return c, choices, params
+	}
+	if !choices[0] {
+		return c, choices[1:], params
+	}
+	return Constant{"?", c.retType}, choices[1:], append(params, c)
 }
 
-func (c Constant) ToSQL() string {
-	return c.val
-}
-
-func (c Constant) Clone() Expr {
-	return Constant{c.val, c.retType}
-}
-
-func (c Constant) RetType() Type {
-	return c.retType
+func (c Constant) MarshalJSON() ([]byte, error) {
+	return json.Marshal(map[string]interface{}{"value": c.val, "type": c.retType.String()})
 }
 
 type Column struct {
@@ -193,33 +279,37 @@ type Column struct {
 	retType Type
 }
 
-func NewColumn(col string, retType Type) Column {
-	return Column{col, retType}
-}
+func NewColumn(col string, retType Type) Column { return Column{col, retType} }
 
-func (c Column) Children() []Expr {
+func (c Column) Children() []Expr { return nil }
+
+func (c Column) ToSQL() string { return c.col }
+
+func (c Column) Clone() Expr { return Column{c.col, c.retType} }
+
+func (c Column) RetType() Type { return c.retType }
+
+func (c *Column) UnmarshalJSON(bs []byte) error {
+	var tmp struct {
+		Name string `json:"name"`
+		Type Type   `json:"type"`
+	}
+	if err := json.Unmarshal(bs, &tmp); err != nil {
+		return err
+	}
+	c.col = tmp.Name
+	c.retType = tmp.Type
 	return nil
-}
-
-func (c Column) ToSQL() string {
-	return c.col
-}
-
-func (c Column) Clone() Expr {
-	return Column{c.col, c.retType}
-}
-
-func (c Column) RetType() Type {
-	return c.retType
 }
 
 type Node interface {
 	Columns() []Expr
-	ToBeautySQL(level int) string
-	ToString() string
+	ToSQL() string
+	String() string
 	Children() []Node
 	Clone() Node
 	AddChild(node Node)
+	Parameterize(choices []bool, params []Param) (Node, []bool, []Param)
 }
 
 type Tree Node
@@ -272,6 +362,16 @@ func (b *baseNode) AddChild(node Node) {
 	b.children = append(b.children, node)
 }
 
+func (b *baseNode) inplaceParameterizeChildren(choices []bool, params []Param) ([]bool, []Param) {
+	for i, c := range b.children {
+		if len(choices) == 0 {
+			break
+		}
+		b.children[i], choices, params = c.Parameterize(choices, params)
+	}
+	return choices, params
+}
+
 type Filter struct {
 	baseNode
 	Where Expr
@@ -281,9 +381,8 @@ func (f *Filter) Columns() []Expr {
 	return f.children[0].Columns()
 }
 
-func (f *Filter) ToBeautySQL(level int) string {
-	return "SELECT * FROM (" +
-		f.children[0].ToBeautySQL(level) + ") t WHERE " + f.Where.ToSQL()
+func (f *Filter) ToSQL() string {
+	return "SELECT * FROM (" + f.children[0].ToSQL() + ") t WHERE " + f.Where.ToSQL()
 }
 
 func (f *Filter) Clone() Node {
@@ -297,8 +396,20 @@ func (f *Filter) Clone() Node {
 	}
 }
 
-func (f *Filter) ToString() string {
-	return "Filter(" + f.children[0].ToString() + ")"
+func (f *Filter) String() string {
+	return "Filter(" + f.children[0].String() + ")"
+}
+
+func (f *Filter) Parameterize(choices []bool, params []Param) (Node, []bool, []Param) {
+	n := f.Clone().(*Filter)
+	choices, params = n.inplaceParameterizeChildren(choices, params)
+	if len(choices) == 0 {
+		return n, choices, params
+	}
+	if pe, ok := f.Where.(ParametricExpr); ok {
+		n.Where, choices, params = pe.Parameterize(choices, params)
+	}
+	return n, choices, params
 }
 
 type Projector struct {
@@ -318,14 +429,12 @@ func (p *Projector) Columns() []Expr {
 	return cols
 }
 
-func (p *Projector) ToBeautySQL(level int) string {
+func (p *Projector) ToSQL() string {
 	cols := make([]string, len(p.Projections))
 	for i, e := range p.Projections {
 		cols[i] = e.ToSQL() + " AS c" + strconv.Itoa(i)
 	}
-	return strings.Repeat(" ", level) + "SELECT " + strings.Join(cols, ", ") + " FROM (\n" +
-		p.children[0].ToBeautySQL(level+1) + "\n" +
-		strings.Repeat(" ", level) + ") AS t"
+	return "SELECT " + strings.Join(cols, ", ") + " FROM (" + p.children[0].ToSQL() + ") t"
 }
 
 func (p *Projector) Clone() Node {
@@ -339,8 +448,25 @@ func (p *Projector) Clone() Node {
 	}
 }
 
-func (p *Projector) ToString() string {
-	return "Projector(" + p.children[0].ToString() + ")"
+func (p *Projector) String() string {
+	return "Projector(" + p.children[0].String() + ")"
+}
+
+func (p *Projector) Parameterize(choices []bool, params []Param) (Node, []bool, []Param) {
+	if len(choices) == 0 {
+		return p, choices, params
+	}
+	n := p.Clone().(*Projector)
+	for i, e := range n.Projections {
+		if len(choices) == 0 {
+			break
+		}
+		if pe, ok := e.(ParametricExpr); ok {
+			n.Projections[i], choices, params = pe.Parameterize(choices, params)
+		}
+	}
+	choices, params = n.inplaceParameterizeChildren(choices, params)
+	return n, choices, params
 }
 
 type OrderBy struct {
@@ -356,13 +482,12 @@ func (o *OrderBy) Columns() []Expr {
 	return o.children[0].Columns()
 }
 
-func (o *OrderBy) ToBeautySQL(level int) string {
+func (o *OrderBy) ToSQL() string {
 	orderBy := make([]string, 0, len(o.OrderByExprs))
 	for _, e := range o.OrderByExprs {
 		orderBy = append(orderBy, e.ToSQL())
 	}
-
-	return "SELECT * FROM (" + o.children[0].ToBeautySQL(level+1) + ") t ORDER BY " + strings.Join(orderBy, ", ")
+	return "SELECT * FROM (" + o.children[0].ToSQL() + ") t ORDER BY " + strings.Join(orderBy, ", ")
 }
 
 func (o *OrderBy) Clone() Node {
@@ -376,7 +501,7 @@ func (o *OrderBy) Clone() Node {
 	}
 }
 
-func (o *OrderBy) ToString() string {
+func (o *OrderBy) String() string {
 	defer func() {
 		if r := recover(); r != nil {
 			fmt.Println("=======")
@@ -385,31 +510,59 @@ func (o *OrderBy) ToString() string {
 			panic("wocao order")
 		}
 	}()
-	return "Order(" + o.children[0].ToString() + ")"
+	return "Order(" + o.children[0].String() + ")"
+}
+
+func (o *OrderBy) Parameterize(choices []bool, params []Param) (Node, []bool, []Param) {
+	if len(choices) == 0 {
+		return o, choices, params
+	}
+	n := o.Clone().(*OrderBy)
+	choices, params = n.inplaceParameterizeChildren(choices, params)
+	return n, choices, params
 }
 
 type Limit struct {
 	baseNode
-	Limit int
+	parameterized bool
+	Limit         int
 }
 
 func (l *Limit) Columns() []Expr {
 	return l.children[0].Columns()
 }
 
-func (l *Limit) ToBeautySQL(level int) string {
-	return l.children[0].ToBeautySQL(level) + " LIMIT " + strconv.Itoa(l.Limit)
+func (l *Limit) ToSQL() string {
+	limit := "?"
+	if !l.parameterized {
+		limit = strconv.Itoa(l.Limit)
+	}
+	return "SELECT * FROM (" + l.children[0].ToSQL() + ") t LIMIT " + limit
 }
 
 func (l *Limit) Clone() Node {
 	return &Limit{
-		baseNode: *l.baseNode.clone(),
-		Limit:    0,
+		baseNode:      *l.baseNode.clone(),
+		parameterized: l.parameterized,
+		Limit:         l.Limit,
 	}
 }
 
-func (l *Limit) ToString() string {
-	return "Limit(" + l.children[0].ToString() + ")"
+func (l *Limit) String() string {
+	return "Limit(" + l.children[0].String() + ")"
+}
+
+func (l *Limit) Parameterize(choices []bool, params []Param) (Node, []bool, []Param) {
+	n := l.Clone().(*Limit)
+	choices, params = n.inplaceParameterizeChildren(choices, params)
+	if len(choices) == 0 {
+		return n, choices, params
+	}
+	if choices[0] {
+		n.parameterized = true
+		params = append(params, NewConstant(strconv.Itoa(l.Limit), ETInt))
+	}
+	return n, choices[1:], params
 }
 
 type Agg struct {
@@ -420,13 +573,19 @@ type Agg struct {
 
 func (a *Agg) Columns() []Expr {
 	ret := make([]Expr, 0, len(a.AggExprs)+len(a.GroupByExprs))
-	ret = append(ret, a.GroupByExprs...)
-	ret = append(ret, a.AggExprs...)
+	for i, e := range a.GroupByExprs {
+		ret = append(ret, NewColumn("c"+strconv.Itoa(i), e.RetType()))
+	}
+	for i, e := range a.AggExprs {
+		ret = append(ret, NewColumn("c"+strconv.Itoa(len(a.GroupByExprs)+i), e.RetType()))
+	}
 	return ret
 }
 
-func (a *Agg) ToBeautySQL(level int) string {
-	ret := a.Columns()
+func (a *Agg) ToSQL() string {
+	ret := make([]Expr, 0, len(a.AggExprs)+len(a.GroupByExprs))
+	ret = append(ret, a.GroupByExprs...)
+	ret = append(ret, a.AggExprs...)
 	aggs := make([]string, 0, len(ret))
 	for i, e := range ret {
 		name := fmt.Sprintf("c%v", i)
@@ -440,13 +599,11 @@ func (a *Agg) ToBeautySQL(level int) string {
 	for _, e := range a.GroupByExprs {
 		groupBy = append(groupBy, e.ToSQL())
 	}
-	groupBySQL := "GROUP BY " + strings.Join(groupBy, ", ")
-	if len(groupBy) == 0 {
-		groupBySQL = ""
+	groupBySQL := "SELECT " + strings.Join(aggs, ", ") + " FROM (" + a.children[0].ToSQL() + ") t"
+	if len(groupBy) > 0 {
+		groupBySQL += " GROUP BY " + strings.Join(groupBy, ", ")
 	}
-	return strings.Repeat(" ", level) + "SELECT " + strings.Join(aggs, ", ") + " FROM (\n" +
-		a.children[0].ToBeautySQL(level+1) + "\n" +
-		strings.Repeat(" ", level) + ") AS t " + groupBySQL
+	return groupBySQL
 }
 
 func (a *Agg) Clone() Node {
@@ -465,8 +622,17 @@ func (a *Agg) Clone() Node {
 	}
 }
 
-func (a *Agg) ToString() string {
-	return "Agg(" + a.children[0].ToString() + ")"
+func (a *Agg) String() string {
+	return "Agg(" + a.children[0].String() + ")"
+}
+
+func (a *Agg) Parameterize(choices []bool, params []Param) (Node, []bool, []Param) {
+	if len(choices) == 0 {
+		return a, choices, params
+	}
+	n := a.Clone().(*Agg)
+	choices, params = n.inplaceParameterizeChildren(choices, params)
+	return n, choices, params
 }
 
 type Join struct {
@@ -485,7 +651,7 @@ func (j *Join) Columns() []Expr {
 	return exprs
 }
 
-func (j *Join) ToBeautySQL(level int) string {
+func (j *Join) ToSQL() string {
 	l, r := j.children[0], j.children[1]
 	lLen, rLen := len(l.Columns()), len(r.Columns())
 	cols := make([]string, lLen+rLen)
@@ -495,10 +661,7 @@ func (j *Join) ToBeautySQL(level int) string {
 	for i := 0; i < rLen; i++ {
 		cols[i+lLen] = "t2.c" + strconv.Itoa(i) + " AS " + "c" + strconv.Itoa(i+lLen)
 	}
-	return strings.Repeat(" ", level) + "SELECT " + strings.Join(cols, ",") + " FROM (\n" +
-		l.ToBeautySQL(level+1) + ") AS t1, (\n" +
-		r.ToBeautySQL(level+1) + ") AS t2\n" +
-		strings.Repeat(" ", level) + " WHERE " + j.JoinCond.ToSQL()
+	return "SELECT " + strings.Join(cols, ",") + " FROM (" + l.ToSQL() + ") t1, (" + r.ToSQL() + ") t2 WHERE " + j.JoinCond.ToSQL()
 }
 
 func (j *Join) Clone() Node {
@@ -512,8 +675,17 @@ func (j *Join) Clone() Node {
 	}
 }
 
-func (j *Join) ToString() string {
-	return "Join(" + j.children[0].ToString() + "," + j.children[1].ToString() + ")"
+func (j *Join) String() string {
+	return "Join(" + j.children[0].String() + "," + j.children[1].String() + ")"
+}
+
+func (j *Join) Parameterize(choices []bool, params []Param) (Node, []bool, []Param) {
+	if len(choices) == 0 {
+		return j, choices, params
+	}
+	n := j.Clone().(*Join)
+	choices, params = n.inplaceParameterizeChildren(choices, params)
+	return n, choices, params
 }
 
 type Table struct {
@@ -535,12 +707,12 @@ func (t *Table) Columns() []Expr {
 	return cols
 }
 
-func (t *Table) ToBeautySQL(level int) string {
+func (t *Table) ToSQL() string {
 	cols := make([]string, len(t.SelectedColumns))
 	for i, idx := range t.SelectedColumns {
 		cols[i] = t.Schema.Columns[idx].col + " AS c" + strconv.Itoa(i)
 	}
-	return strings.Repeat(" ", level) + "SELECT " + strings.Join(cols, ", ") + " FROM " + t.Schema.Name
+	return "SELECT " + strings.Join(cols, ", ") + " FROM " + t.Schema.Name
 }
 
 func (t *Table) Clone() Node {
@@ -555,13 +727,19 @@ func (t *Table) Clone() Node {
 	return t1
 }
 
-func (t *Table) ToString() string {
+func (t *Table) String() string {
 	return "Table"
 }
 
+func (t *Table) AppendParams(params []Param) []Param { return params }
+
+func (t *Table) Parameterize(choices []bool, params []Param) (Node, []bool, []Param) {
+	return t, choices, params
+}
+
 type TableSchema struct {
-	Name    string
-	Columns []Column
+	Name    string   `json:"name"`
+	Columns []Column `json:"columns"`
 }
 
 type TableSchemas []TableSchema
@@ -661,7 +839,7 @@ func GenExpr(cols []Expr, tp TypeMask, validate ValidateExprFn) Expr {
 				expr.SetRetType(fnSpec.ReturnType)
 				ok := true
 				for i := 0; i < n; i++ {
-					subExpr := gen(lv+1, fnSpec.ArgTypeMask(i, expr.Children()), RejectAllConstatns)
+					subExpr := gen(lv+1, fnSpec.ArgTypeMask(i, expr.Children()), RejectAllConstants)
 					if subExpr == nil {
 						ok = false
 						break
@@ -683,4 +861,17 @@ func GenExpr(cols []Expr, tp TypeMask, validate ValidateExprFn) Expr {
 		panic("???")
 	}
 	return gen(0, tp, validate)
+}
+
+func Parameterize(t Node, choices []bool) (Tree, []Param) {
+	pt, _, params := t.Parameterize(choices, nil)
+	return pt, params
+}
+
+func RandChoose(n int, prob float64) []bool {
+	ps := make([]bool, n)
+	for i := 0; i < n; i++ {
+		ps[i] = rand.Float64() < prob
+	}
+	return ps
 }

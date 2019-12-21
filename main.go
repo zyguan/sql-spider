@@ -2,12 +2,10 @@ package main
 
 import (
 	"fmt"
-	"math/rand"
-	"time"
 
-	"github.com/zyguan/sql-spider/util"
-	"github.com/zyguan/sql-spider/nodegen"
 	"github.com/zyguan/sql-spider/exprgen"
+	"github.com/zyguan/sql-spider/nodegen"
+	"github.com/zyguan/sql-spider/util"
 )
 
 func getTableSchemas() util.TableSchemas {
@@ -39,7 +37,7 @@ func safePrint(t util.Tree) {
 	defer func() {
 		if r := recover(); r != nil {
 			fmt.Println("============================")
-			fmt.Println(t.ToString())
+			fmt.Println(t.String())
 			fmt.Println("============================")
 			panic("??")
 		}
@@ -50,5 +48,5 @@ func safePrint(t util.Tree) {
 }
 
 func init() {
-	rand.Seed(time.Now().UnixNano())
+	//rand.Seed(time.Now().UnixNano())
 }

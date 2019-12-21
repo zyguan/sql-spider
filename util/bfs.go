@@ -2,8 +2,8 @@ package util
 
 import (
 	"container/list"
-	"math/rand"
 	"fmt"
+	"math/rand"
 )
 
 type BFSHelper struct {
@@ -22,7 +22,7 @@ func createBFSHelper(beginTree Tree, nNneighbours int) *BFSHelper {
 	}
 	bh.fifo.PushBack(beginTree.Clone())
 	bh.results = append(bh.results, beginTree.Clone())
-	bh.states[beginTree.ToBeautySQL(0)] = 0
+	bh.states[beginTree.ToSQL()] = 0
 	return bh
 }
 
@@ -57,14 +57,14 @@ func (bh *BFSHelper) transform(root, node Node, path []int) {
 				}
 				p.(*Filter).Where = where
 
-				state := tree.ToBeautySQL(0)
+				state := tree.ToSQL()
 				if _, ok := bh.states[state]; ok {
 					continue
 				}
 
 				bh.fifo.PushBack(tree)
 				bh.results = append(bh.results, tree)
-				bh.states[tree.ToBeautySQL(0)] = len(path) + 1
+				bh.states[tree.ToSQL()] = len(path) + 1
 				if len(bh.results) >= bh.nNneighbours {
 					return
 				}
@@ -90,14 +90,14 @@ func (bh *BFSHelper) transform(root, node Node, path []int) {
 					}
 					p.(*Projector).Projections[i] = proj
 
-					state := tree.ToBeautySQL(0)
+					state := tree.ToSQL()
 					if _, ok := bh.states[state]; ok {
 						continue
 					}
 
 					bh.fifo.PushBack(tree)
 					bh.results = append(bh.results, tree)
-					bh.states[tree.ToBeautySQL(0)] = len(path) + 1
+					bh.states[tree.ToSQL()] = len(path) + 1
 					if len(bh.results) >= bh.nNneighbours {
 						return
 					}
