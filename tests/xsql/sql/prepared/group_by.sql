@@ -1,0 +1,18 @@
+DROP TABLE IF EXISTS t1, t2;
+CREATE TABLE t1(a INT, KEY(a));
+INSERT INTO t1 VALUES (0);
+CREATE TABLE t2(b INT, KEY(b));
+INSERT INTO t2 VALUES (0),(0);
+
+PREPARE stmt FROM '
+SELECT 1 FROM t2
+                  LEFT JOIN t1 ON NULL
+GROUP BY t2.b, t1.a
+HAVING a <> 2';
+--query group_by
+EXECUTE stmt;
+--query group_by
+EXECUTE stmt;
+
+DEALLOCATE PREPARE stmt;
+DROP TABLE t1, t2;

@@ -3,6 +3,7 @@ module github.com/zyguan/sql-spider
 go 1.13
 
 require (
+	github.com/go-logr/logr v0.1.0
 	github.com/go-sql-driver/mysql v1.4.1
 	github.com/google/uuid v1.1.1
 	github.com/hashicorp/go-multierror v1.0.1-0.20191120192120-72917a1559e1

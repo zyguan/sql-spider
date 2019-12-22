@@ -1,0 +1,14 @@
+{
+  "name": "all",
+  "stages": {
+    "test": [
+      "sql/prepared/ctype_utf8.sql",
+      "sql/prepared/func_group.sql",
+      "sql/prepared/func_regexp.sql",
+      "sql/prepared/group_by.sql",
+      "sql/prepared/insert.sql",
+      "sql/prepared/type_newdecimal.sql",
+      "sql/prepared/window_min_max.sql"
+    ]
+  }
+}

@@ -61,6 +61,7 @@ func TestPotentialBugs(t *testing.T) {
 }
 
 func init() {
-	just.SetTraceFn(errors.Trace)
-	util.LoadDotEnvOnce()
+	util.LoadDotEnvOnce(func() {
+		just.SetTraceFn(errors.Trace)
+	})
 }

@@ -1,0 +1,8 @@
+{
+  "name": "regression",
+  "stages": {
+    "test": [
+      "sql/prepared/func_regexp.sql"
+    ]
+  }
+}
